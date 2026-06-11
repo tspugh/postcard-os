@@ -55,9 +55,22 @@ def _campaign_board(session: Session, campaign: Campaign) -> dict:
     committed_parts = [p for p in parts if p.status in ("committed", "paid")]
     filled = len(committed_parts)
     days_remaining = (campaign.deadline - date.today()).days
+
+    from server.services.documents import _drafts_in_review
+
+    drafts_by_part = _drafts_in_review(session, [p.id for p in parts])
+    participations = [
+        {
+            **participation_to_dict(p, business_name=business_names.get(p.business_id)),
+            "drafts_in_review": drafts_by_part.get(p.id, 0),
+        }
+        for p in sorted(parts, key=lambda p: p.created_at, reverse=True)
+    ]
+
     return {
         "campaign": campaign_to_dict(campaign),
         "slots": slots,
+        "participations": participations,
         "slots_filled": filled,
         "slots_total": campaign.total_slots,
         "scarcity": f"{filled} of {campaign.total_slots} filled, closes {campaign.deadline.isoformat()}",

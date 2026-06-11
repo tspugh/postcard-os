@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Postcard — Dashboard v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="postcard.css" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script src="postcard-data.js"></script>
+<script src="postcard-history.js"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="postcard-ui.jsx"></script>
+<script type="text/babel" src="postcard-drawer.jsx"></script>
+<script type="text/babel" src="postcard-board.jsx"></script>
+<script type="text/babel" src="postcard-leads.jsx"></script>
+<script type="text/babel" src="postcard-campaign.jsx"></script>
+<script type="text/babel" src="postcard-settings.jsx"></script>
+<script type="text/babel">
+  const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+    "theme": "dark",
+    "accent": "#E07856",
+    "density": "compact"
+  }/*EDITMODE-END*/;
+
+  const seed = window.POSTCARD_SEED;
+  const v2 = window.POSTCARD_V2;
+
+  const INITIAL_SETTINGS = {
+    defaultSlotPriceCents: seed.SETTINGS.defaultSlotPriceCents,
+    totalSlots: seed.SETTINGS.totalSlots,
+    categories: seed.SETTINGS.categories,
+    seedMarket: seed.SETTINGS.seedMarket,
+    tone: 'neighborly',
+    outreachInstructions: 'Lead with their hook, not ours. One ask per email. Mention the one-per-industry exclusivity and the deadline. Keep it under 120 words. Never invent a price — it\u2019s $299 unless I say otherwise.',
+    myBusiness: {
+      name: 'GR Postcard Co.',
+      description: 'Shared-mail postcard campaigns for Lafayette small businesses — 8 local businesses, one card, 10,000 mailboxes.',
+      notes: 'Mention I\u2019m local — born and raised in Lafayette. Happy to meet in person for coffee.',
+      signature: '— Grant\nGR Postcard Co. · Lafayette, IN\n(765) 555-0100',
+    },
+  };
+
+  function App() {
+    const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+    const [tab, setTab] = React.useState('leads');
+    const [businesses, setBusinesses] = React.useState(seed.BUSINESSES);
+    const [settings, setSettings] = React.useState(INITIAL_SETTINGS);
+    const [activity] = React.useState(seed.ACTIVITY);
+    const [openId, setOpenId] = React.useState(null);
+    const [feedOpen, setFeedOpen] = React.useState(false);
+    const [toasts, pushToast] = useToasts();
+
+    React.useEffect(() => {
+      document.documentElement.dataset.theme = t.theme;
+      document.documentElement.dataset.density = t.density;
+      document.documentElement.style.setProperty('--accent', t.accent);
+    }, [t.theme, t.accent, t.density]);
+
+    const update = (id, fn) => {
+      setBusinesses((bs) => bs.map((b) => {
+        if (b.id !== id) return b;
+        const copy = { ...b, participation: b.participation ? { ...b.participation } : null };
+        fn(copy);
+        return copy;
+      }));
+    };
+
+    const openCard = (id) => {
+      update(id, (b) => { if (!b.viewedAt) b.viewedAt = new Date().toISOString(); });
+      setOpenId(id);
+    };
+
+    const stageLeads = (leads) => {
+      const now = new Date().toISOString();
+      setBusinesses((bs) => [
+        ...leads.map((l) => ({
+          id: 'b-' + Math.random().toString(36).slice(2),
+          name: l.name, category: l.category, website: l.website,
+          source: 'operator', createdAt: now, viewedAt: now, status: 'staged',
+          premise: null, hooks: [], evidence: [], contacts: [], participation: null, comments: [],
+        })),
+        ...bs,
+      ]);
+      pushToast('Staged ' + leads.length + ' lead' + (leads.length === 1 ? '' : 's'));
+    };
+
+    const committed = businesses.filter((b) => b.participation && ['committed', 'paid'].includes(b.participation.status));
+    const days = daysUntil(seed.CAMPAIGN.deadline);
+    const openBiz = businesses.find((b) => b.id === openId);
+    const drawerSettings = { ...seed.SETTINGS, categories: settings.categories };
+
+    return (
+      <div className="app">
+        <header className="topbar" data-screen-label="Top bar">
+          <div className="wordmark"><span className="wordmark-stamp">PC</span>Postcard</div>
+          <nav className="topbar-tabs">
+            <button className={'topbar-tab' + (tab === 'leads' ? ' active' : '')} onClick={() => setTab('leads')}>Leads</button>
+            <button className={'topbar-tab' + (tab === 'campaign' ? ' active' : '')} onClick={() => setTab('campaign')}>Campaign</button>
+            <button className={'topbar-tab' + (tab === 'settings' ? ' active' : '')} onClick={() => setTab('settings')}>Settings</button>
+          </nav>
+          <div className="topbar-spacer"></div>
+          <button className="scarcity-badge" title={seed.CAMPAIGN.name + ' — open campaign view'} style={{ cursor: 'pointer', background: 'none' }} onClick={() => setTab('campaign')}>
+            <span className="scarcity-dots">
+              {Array.from({ length: seed.CAMPAIGN.totalSlots }, (_, i) => (
+                <span key={i} className={'scarcity-dot' + (i < committed.length ? ' filled' : '')}></span>
+              ))}
+            </span>
+            <span><b>{committed.length} of {seed.CAMPAIGN.totalSlots}</b> filled · closes in <b>{days}d</b></span>
+          </button>
+        </header>
+
+        <div className="view">
+          {tab === 'leads' && (
+            <LeadsView businesses={businesses} campaign={seed.CAMPAIGN} onOpen={openCard} onAdd={stageLeads} settings={settings} />
+          )}
+          {tab === 'campaign' && (
+            <CampaignView businesses={businesses} campaign={seed.CAMPAIGN} mayCampaign={v2.MAY}
+              onOpen={openCard} update={update} toast={pushToast} />
+          )}
+          {tab === 'settings' && (
+            <SettingsView settings={settings} setSettings={setSettings} toast={pushToast} />
+          )}
+        </div>
+
+        <ActivityFeed activity={activity} open={feedOpen} onToggle={() => setFeedOpen(!feedOpen)} />
+
+        {openBiz && (
+          <DetailDrawer biz={openBiz} settings={drawerSettings} campaign={seed.CAMPAIGN}
+            onClose={() => setOpenId(null)} update={update} toast={pushToast} />
+        )}
+
+        <Toast toasts={toasts} />
+
+        <TweaksPanel>
+          <TweakSection label="Theme" />
+          <TweakRadio label="Mode" value={t.theme} options={['dark', 'light']} onChange={(v) => setTweak('theme', v)} />
+          <TweakColor label="Accent" value={t.accent} options={['#E07856', '#6E79D6', '#3FA690', '#C9A227']} onChange={(v) => setTweak('accent', v)} />
+          <TweakSection label="Layout" />
+          <TweakRadio label="Density" value={t.density} options={['regular', 'compact']} onChange={(v) => setTweak('density', v)} />
+        </TweaksPanel>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

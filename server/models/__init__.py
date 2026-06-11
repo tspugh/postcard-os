@@ -68,6 +68,7 @@ class Settings(TimestampMixin, Base):
     categories: Mapped[list] = mapped_column(JSONB, nullable=False, default=lambda: list(CANONICAL_CATEGORIES))
     seed_market: Mapped[str] = mapped_column(Text, nullable=False, default="Lafayette, IN", server_default=text("'Lafayette, IN'"))
     operator_business: Mapped[dict | None] = mapped_column(JSONB)  # {name, description, personal_notes, signature}
+    outreach_tone: Mapped[str] = mapped_column(Text, nullable=False, default="neighborly", server_default=text("'neighborly'"))
     outreach_instructions: Mapped[str | None] = mapped_column(Text)
 
 

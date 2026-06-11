@@ -18,8 +18,8 @@ server/          FastAPI app (one process)
   models/        SQLAlchemy models
   migrations/    Alembic
 plugin/          Claude plugin (manifest + skills generated from guidance/)
-web/             React SPA (phase-1 UI; not built yet)
-docs/            PRD + TRD
+web/             React (Vite) SPA — Leads / Campaign / Settings, from docs/design-docs
+docs/            PRD + TRD + design prototype (design-docs/)
 ```
 
 ## Run
@@ -41,7 +41,11 @@ projects on this box); inside the compose network the server uses the standard p
 uv sync                       # python 3.12 env
 docker compose up postgres -d
 make migrate
-make dev                      # uvicorn --reload on :8000
+make dev                      # uvicorn --reload on :8000 (serves web/dist if built)
+
+cd web && npm install
+npm run dev                   # vite on :5173, /api proxied to :8000
+npm run build                 # → web/dist, served by the python server at /
 ```
 
 ## Test

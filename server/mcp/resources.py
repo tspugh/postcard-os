@@ -34,7 +34,10 @@ def register_resources(mcp: FastMCP) -> None:
         with session_scope() as session:
             s = get_settings(session)
         instructions = s.outreach_instructions or "(none set yet — use the structural expectations above)"
-        return f"{base}\n\n## Operator's outreach instructions (verbatim)\n\n{instructions}\n"
+        return (
+            f"{base}\n\n## Operator's base tone\n\n{s.outreach_tone}\n"
+            f"\n## Operator's outreach instructions (verbatim)\n\n{instructions}\n"
+        )
 
     @mcp.resource("postcard://reference/sender", mime_type="text/markdown")
     def sender() -> str:

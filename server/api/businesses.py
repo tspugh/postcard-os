@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from server.db import get_session
 from server.services import businesses as business_service, contacts as contact_service
+from server.services.documents import business_detail_document, list_business_documents
 from server.services.summary import summary_strip
 
 router = APIRouter(tags=["businesses"])
@@ -18,8 +19,9 @@ def dashboard_summary(session: Session = Depends(get_session)):
 
 
 @router.get("/businesses")
-def list_businesses(status: str | None = None, session: Session = Depends(get_session)):
-    return business_service.list_businesses(session, status=status)
+def list_businesses(session: Session = Depends(get_session)):
+    """Leads view document: businesses with their most relevant participation inline."""
+    return list_business_documents(session)
 
 
 @router.post("/businesses/stage")
@@ -30,8 +32,9 @@ def stage_leads(payload: dict, session: Session = Depends(get_session)):
 
 @router.get("/businesses/{business_id}")
 def business_detail(business_id: uuid.UUID, session: Session = Depends(get_session)):
-    """Detail fetch marks the record viewed (clears the 'unviewed' badge)."""
-    return business_service.mark_viewed(session, business_id)
+    """Drawer document: research, contacts, comments, participations with email threads
+    and state changes. Fetching marks the record viewed (clears the 'unviewed' badge)."""
+    return business_detail_document(session, business_id)
 
 
 @router.patch("/businesses/{business_id}")
