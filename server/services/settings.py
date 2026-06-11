@@ -10,8 +10,11 @@ EDITABLE_FIELDS = {
     "categories",
     "seed_market",
     "operator_business",
+    "outreach_tone",
     "outreach_instructions",
 }
+
+OUTREACH_TONES = ("neighborly", "direct", "professional")
 
 
 def get_settings(session: Session) -> Settings:
@@ -38,6 +41,8 @@ def update_settings(session: Session, fields: dict) -> Settings:
     for key in ("default_slot_price_cents", "default_total_slots"):
         if key in fields and (not isinstance(fields[key], int) or fields[key] <= 0):
             raise ValidationRejected(f"{key} must be a positive integer.")
+    if "outreach_tone" in fields and fields["outreach_tone"] not in OUTREACH_TONES:
+        raise ValidationRejected(f"outreach_tone must be one of {', '.join(OUTREACH_TONES)}.")
     row = get_settings(session)
     for key, value in fields.items():
         setattr(row, key, value)
@@ -52,5 +57,6 @@ def settings_to_dict(s: Settings) -> dict:
         "categories": s.categories,
         "seed_market": s.seed_market,
         "operator_business": s.operator_business,
+        "outreach_tone": s.outreach_tone,
         "outreach_instructions": s.outreach_instructions,
     }
