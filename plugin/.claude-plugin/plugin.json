@@ -1,0 +1,8 @@
+{
+  "name": "postcard",
+  "version": "0.1.0",
+  "description": "Work the postcard campaign lead pipeline: stage and research local businesses, draft outreach for human review, manage commitments and waitlists, and design postcard slots.",
+  "author": {
+    "name": "postcard-os"
+  }
+}

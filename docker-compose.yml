@@ -1,0 +1,50 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postcard
+      POSTGRES_PASSWORD: postcard
+      POSTGRES_DB: postcard
+    ports:
+      # host 5434: other projects on this box already hold 5432/5433
+      - "127.0.0.1:5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backups:/backups
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postcard -d postcard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://postcard:postcard@postgres:5432/postcard
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn server.app:app --host 0.0.0.0 --port 8000"
+
+  # Nightly pg_dump to ./backups (TRD §8). Runs alongside the stack.
+  backup:
+    image: postgres:16
+    environment:
+      PGPASSWORD: postcard
+    volumes:
+      - ./backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: >
+      sh -c 'while true; do
+               pg_dump -h postgres -U postcard -d postcard -f /backups/postcard-$$(date +%F).sql;
+               sleep 86400;
+             done'
+
+volumes:
+  pgdata:
