@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "postcard": {
+      "type": "http",
+      "url": "http://localhost:8000/mcp/"
+    }
+  }
+}
