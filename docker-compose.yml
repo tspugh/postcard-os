@@ -6,7 +6,8 @@ services:
       POSTGRES_PASSWORD: postcard
       POSTGRES_DB: postcard
     ports:
-      - "127.0.0.1:5432:5432"
+      # host 5434: other projects on this box already hold 5432/5433
+      - "127.0.0.1:5434:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./backups:/backups

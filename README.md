@@ -28,6 +28,9 @@ docs/            PRD + TRD
 docker compose up --build     # postgres:16 + server on http://localhost:8000
 ```
 
+Postgres is exposed to the host on `127.0.0.1:5434` (5432/5433 are taken by other
+projects on this box); inside the compose network the server uses the standard port.
+
 - REST: `http://localhost:8000/api/...`
 - MCP (Streamable HTTP): `http://localhost:8000/mcp/`
 - No auth in phase 1 — bind to localhost or a firewalled box only.
