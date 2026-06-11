@@ -96,8 +96,6 @@ def stage_leads(session: Session, leads: list[dict], source: str = "agent:web") 
             rejected.append({"lead": lead, "reason": reason})
             continue
         b = Business(name=name, category=category, website=website, source=source, status="staged")
-        if lead.get("note"):
-            b.premise = None  # notes are not premises; keep the bar honest
         session.add(b)
         session.flush()
         existing[key] = (b.id, b.name, b.status, None)
