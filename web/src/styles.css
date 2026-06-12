@@ -283,6 +283,8 @@ body {
 .set-field input:focus, .set-field textarea:focus, .set-field select:focus { outline: none; border-color: var(--accent); }
 .set-field textarea { resize: vertical; line-height: 1.5; }
 .set-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-row { display: flex; gap: 10px; }
+.field-row select { flex: 1; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; background: var(--bg-hover); border: 1px solid var(--border-strong); border-radius: 99px; padding: 3px 6px 3px 11px; }
 .chip button { border: none; background: none; color: var(--text-3); cursor: pointer; font-size: 13px; padding: 0 4px; line-height: 1; }

@@ -21,6 +21,7 @@ export function CampaignView({ settings, version, onOpen, toast, bump }) {
   const [campaigns, setCampaigns] = useState(null);
   const [campId, setCampId] = useState(null);
   const [board, setBoard] = useState(null);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     api.get('/campaigns').then((cs) => {
@@ -49,10 +50,15 @@ export function CampaignView({ settings, version, onOpen, toast, bump }) {
         <select className="camp-select" value={campId || ''} onChange={(e) => setCampId(e.target.value)}>
           {campaigns.map((c) => <option key={c.id} value={c.id}>{c.name} — {c.status}</option>)}
         </select>
+        <Btn small onClick={() => setCreating(!creating)}>{creating ? 'Cancel' : '+ New campaign'}</Btn>
         <div className="camp-lifecycle">
           {LIFECYCLE.map((s) => <span key={s} className={'stage' + (status === s ? ' current' : '')}>{s}</span>)}
         </div>
       </div>
+      {creating && (
+        <CreateCampaign settings={settings} toast={toast} bump={bump}
+          onDone={(c) => { setCreating(false); if (c?.id) setCampId(c.id); }} />
+      )}
       {isArchived
         ? <ArchivedCampaign board={board} onOpen={onOpen} />
         : <LiveCampaign board={board} onOpen={onOpen} toast={toast} bump={bump} />}
@@ -60,21 +66,49 @@ export function CampaignView({ settings, version, onOpen, toast, bump }) {
   );
 }
 
-function CreateCampaign({ settings, toast, bump }) {
-  const [month, setMonth] = useState('');
+const MONTHS = [
+  ['01', 'January'], ['02', 'February'], ['03', 'March'], ['04', 'April'],
+  ['05', 'May'], ['06', 'June'], ['07', 'July'], ['08', 'August'],
+  ['09', 'September'], ['10', 'October'], ['11', 'November'], ['12', 'December'],
+];
+
+// Explicit month/year selects instead of <input type="month">: Firefox and
+// desktop Safari render that as a bare text box with no picker.
+function CreateCampaign({ settings, toast, bump, onDone }) {
+  const thisYear = new Date().getFullYear();
+  const [monthNum, setMonthNum] = useState('');
+  const [year, setYear] = useState(String(thisYear));
+  const [name, setName] = useState('');
   const [deadline, setDeadline] = useState('');
+  const monthLabel = monthNum ? MONTHS.find(([n]) => n === monthNum)[1] : '';
+  const autoName = monthNum ? `${settings.seed_market} ${monthLabel} ${year}` : 'auto-named from market + month';
   const submit = () => {
-    api.post('/campaigns', { month: month + '-01', deadline })
-      .then(() => { toast('Campaign created'); bump(); })
+    const body = { month: `${year}-${monthNum}-01`, deadline };
+    if (name.trim()) body.name = name.trim();
+    api.post('/campaigns', body)
+      .then((c) => { toast('Campaign created'); onDone?.(c); bump(); })
       .catch((e) => toast(e.message));
   };
   return (
     <div className="camp-create">
       <h3>New campaign</h3>
-      <p>One postcard run: {settings.seed_market} · {settings.default_total_slots} slots at {money(settings.default_slot_price_cents)} (snapshotted from settings).</p>
-      <div className="set-field"><label>Month</label><input type="month" value={month} onChange={(e) => setMonth(e.target.value)} /></div>
+      <p>One postcard run: {settings.seed_market} · {settings.default_total_slots} slots at {money(settings.default_slot_price_cents)} (snapshotted from settings). Multiple campaigns can run in the same month.</p>
+      <div className="set-field"><label>Name</label>
+        <input type="text" value={name} placeholder={autoName} onChange={(e) => setName(e.target.value)} />
+      </div>
+      <div className="set-field"><label>Month</label>
+        <div className="field-row">
+          <select value={monthNum} onChange={(e) => setMonthNum(e.target.value)}>
+            <option value="" disabled>Select month…</option>
+            {MONTHS.map(([num, label]) => <option key={num} value={num}>{label}</option>)}
+          </select>
+          <select value={year} onChange={(e) => setYear(e.target.value)}>
+            {[thisYear, thisYear + 1, thisYear + 2].map((y) => <option key={y} value={y}>{y}</option>)}
+          </select>
+        </div>
+      </div>
       <div className="set-field"><label>Deadline</label><input type="date" value={deadline} onChange={(e) => setDeadline(e.target.value)} /></div>
-      <Btn kind="btn-primary" disabled={!month || !deadline} onClick={submit}>Create campaign</Btn>
+      <Btn kind="btn-primary" disabled={!monthNum || !deadline} onClick={submit}>Create campaign</Btn>
     </div>
   );
 }
