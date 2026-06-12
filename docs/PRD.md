@@ -104,6 +104,7 @@ The MCP tool surface *is* the workflow: each tool is a transition in the lead st
 46. As an agent, I want reference material (workflow, quality bars, slot spec, template, pricing, sender profile, outreach style) available as MCP resources, so that stable knowledge doesn't consume tool calls.
 47. As an agent, I want actionable error messages from every tool (what failed, what to do instead), so that I can self-correct instead of stalling.
 48. As an agent, I want to record a commitment amount on a participation when the operator relays a "yes," so that pipeline money state can be updated in the flow of conversation.
+49. As an agent, I want to create a campaign when the operator explicitly asks for one (month + deadline, name and market defaulting from settings) — and, when no campaign exists, I want campaign-dependent tools to fail with a message telling me to ask the operator (or use that tool only on their explicit instruction) — so that a session can set up the next run in the flow of conversation while campaign creation remains the operator's call, never something I do to unblock myself.
 
 ## UI Requirements
 

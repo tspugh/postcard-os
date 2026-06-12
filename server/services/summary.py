@@ -115,8 +115,10 @@ def get_campaign_status(session: Session, campaign_id=None) -> dict:
     }
     if campaign is None:
         doc["note"] = (
-            "No active campaign. The operator creates campaigns from the dashboard; "
-            "you can still stage and research leads — they attach to a campaign later."
+            "No active campaign. Tell the operator to create one in the dashboard so you can "
+            "attach businesses and draft outreach — or, ONLY if the operator has explicitly "
+            "asked you for a new campaign, create it with postcard_create_campaign. You can "
+            "always stage and research leads — they attach to a campaign later."
         )
     return doc
 

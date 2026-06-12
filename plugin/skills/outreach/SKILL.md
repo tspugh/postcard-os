@@ -56,6 +56,9 @@ any pre-commitment state → declined (operator)
 
 5. **Attach** — `postcard_add_to_campaign` once a business is researched. This snapshots the
    asking price from the campaign. Multiple simultaneous pitches per category are expected.
+   A participation requires a campaign: if none exists, tell the operator to create one in
+   the dashboard — or, only when the operator has explicitly asked you for a new campaign,
+   create it with `postcard_create_campaign` (month, deadline, optional name/market).
 6. **Draft** — `postcard_save_email_draft`. Every save creates a new version in review;
    nothing you write is sendable without operator approval. You never mark anything sent —
    never imply an email was sent.
@@ -82,6 +85,9 @@ you never write template HTML. Read slot-anchored feedback with `postcard_get_co
 - When exclusivity blocks a commitment, recommend (and use) the waitlist.
 - Active advertisers are protected: no disqualification, no deleting their last contact.
 - Prices come from settings/campaign snapshots — never invent a number.
+- Campaign creation is the operator's call. `postcard_create_campaign` exists for when they
+  explicitly ask for one — never use it to unblock yourself, and never create campaigns
+  speculatively. Campaigns are archived, not deleted; a stray one lingers forever.
 
 # Quality bars and guards
 
