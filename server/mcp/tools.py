@@ -134,6 +134,23 @@ def register_tools(mcp: FastMCP) -> None:
         with session_scope() as session:
             return business_service.list_staged(session, limit=limit)
 
+    @mcp.tool(annotations=READ_ONLY)
+    def postcard_list_businesses(
+        status: str | None = None, category: str | None = None, limit: int = 50
+    ) -> list[dict]:
+        """Read the pipeline: businesses with their research record (website, premise, hooks,
+        evidence URLs, address, service_area) and contacts, newest first. Filter by status
+        (staged/researching/researched/disqualified) and/or category. Use researched and
+        contacted businesses as seeds to network out to new leads — see
+        postcard://reference/research-strategy."""
+        with session_scope() as session:
+            if status is not None and status not in ("staged", "researching", "researched", "disqualified"):
+                raise ToolError(
+                    f"'{status}' is not a business status. Valid: staged, researching, "
+                    "researched, disqualified."
+                )
+            return business_service.list_businesses(session, status=status, category=category, limit=limit)
+
     @mcp.tool(annotations=NON_DESTRUCTIVE)
     def postcard_stage_leads(leads: list[LeadIn]) -> dict:
         """Bulk-stage leads found through discovery. Staging bar (enforced): name + category +

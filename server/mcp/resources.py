@@ -22,6 +22,11 @@ def register_resources(mcp: FastMCP) -> None:
         """The state machines, the step-by-step playbook, and which tool effects which transition."""
         return _guidance("workflow.md")
 
+    @mcp.resource("postcard://reference/research-strategy", mime_type="text/markdown")
+    def research_strategy() -> str:
+        """Discovery strategy: network out from researched/contacted leads into a web of leads; capture address and service area for proximity."""
+        return _guidance("research-strategy.md")
+
     @mcp.resource("postcard://reference/quality-bars", mime_type="text/markdown")
     def quality_bars() -> str:
         """Staging bar, research bar, the disqualification vocabulary, and the active-is-protected guards."""

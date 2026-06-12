@@ -1,20 +1,79 @@
 ---
-name: outreach
-description: Work the postcard lead pipeline — stage, claim, research local businesses, draft outreach emails for human review, record commitments, and use waitlists when categories fill. Use whenever operating the postcard MCP server.
+name: lead-research
+description: Discover and research local business leads through the postcard MCP — stage candidates, claim and research them to the quality bar, and network out from already-contacted leads into a web of researched prospects. Use when finding or researching businesses for the postcard pipeline.
 ---
 
 <!-- GENERATED from server/guidance/ by scripts/build_plugin_skills.py — edit there, then `make build-skills`. -->
 
-# Outreach — session ritual
+# Lead research — session ritual
 
 1. **Orient first, always:** call `postcard_get_campaign_status`. It carries the settings
-   (price, categories, market), the sender profile, the outreach instructions, the fill map,
-   and every waitlist. Do not stage, research, or draft before orienting.
-2. Work the pipeline with the playbook below. The bars are enforced by the tools; when a tool
-   rejects you, the error tells you the valid next action — follow it.
-3. Hard rules: never imply an email was sent (the operator sends from their own inbox);
-   never research a disqualified lead; when exclusivity blocks a commitment, move the
-   advertiser to the waitlist; never invent a price.
+   (price, categories, market), the fill map, and pipeline counts. The seed market and the
+   category vocabulary scope everything you discover.
+2. **Network out before searching cold:** read the existing web with
+   `postcard_list_businesses` (researched, plus the campaign board's contacted/interested
+   participations) and follow its edges — neighbors, named partners, shared directories —
+   per the discovery strategy below.
+3. Stage what clears the staging bar, claim before researching, research to the research bar,
+   and record each business's address and service area as you go.
+4. Hard rules: never research a disqualified lead; never re-stage a rejected duplicate —
+   work the existing record; disqualify dead ends with a reason code, never silently drop them.
+
+# Discovery strategy — building the web of leads
+
+Discovery is your job; the app only receives staged leads. There are two modes. Prefer
+networking out once the pipeline has any history at all — it produces warmer, better-fitting
+leads than cold sweeps.
+
+## Mode 1 — network out from the pipeline you already have (preferred)
+
+Every researched or contacted business is a node in a local web; its record is full of edges
+to businesses nobody has staged yet. Work the web:
+
+1. **Pull the existing web:** `postcard_list_businesses` (filter by `status="researched"`,
+   and check the campaign board for contacted/interested participations). Each record carries
+   the seeds: website, evidence URLs, address, service area, hooks.
+2. **Follow the edges from each node:**
+   - **Physical neighbors** — same plaza, strip, or street as the business's address
+     ("businesses near {address}"). Postcard audiences are geographic; neighbors share one.
+   - **Named relationships** — partners, suppliers, and "friends of the shop" mentioned on
+     their site, in their reviews, or in local news that an evidence URL surfaced.
+   - **Shared directories** — the chamber-of-commerce page, association roster, or "best of
+     {market}" list where you found one lead always lists more.
+   - **Customer-overlap categories** — a researched roofer implies the same homeowners need
+     gutters, landscaping, HVAC. Fill categories the card still needs from the same audience.
+3. **Stage what clears the bar** (name + category + working website), citing the connection
+   in the lead's `note` (e.g. "two doors from Acme Roofing on Sagamore Pkwy"). The note is
+   how the operator sees the web you are building.
+4. **Research the new nodes**, and the web grows — each researched lead is the next round's
+   seed.
+
+## Mode 2 — cold sweep (when the pipeline is empty or a category has no thread to pull)
+
+Search the seed market directly per category from settings: maps results, "{category}
+{market}", local directories, review sites. Stage everything that clears the bar; volume is
+fine, the staging bar is the filter.
+
+## Always capture where the business operates
+
+Proximity is the product's geography: every business on the card shares one audience, so
+*where a lead's customers are* is research data, not trivia.
+
+- During research, record the **street address** and the **service area** (the area whose
+  residents the business serves or draws from — e.g. "Tippecanoe County", "downtown
+  Lafayette", "20-mile radius of West Lafayette") via `postcard_update_business`
+  (`address`, `service_area`). Do this even though the research bar does not require it.
+- When choosing what to stage next, prefer candidates whose audience overlaps the web you
+  already have — same neighborhoods, same service radius. Grouping leads by proximity makes
+  every slot on the card reinforce the others.
+
+## Discipline
+
+- Never re-stage what exists: `postcard_stage_leads` rejects duplicates and disqualified
+  records by name — read the rejection, work the existing record instead.
+- Never network out from a disqualified lead; that thread is cut.
+- A connection is a reason to *stage*, not a hook. Hooks still come from researching the
+  business itself.
 
 # Pipeline workflow — the playbook
 
@@ -35,6 +94,10 @@ staged → researching → researched
    └────────┴──────────────┴──→ disqualified (reason code, audited)
 ```
 
+0. **Discover** — find candidates per `postcard://reference/research-strategy`: network out
+   from already-researched and contacted businesses (`postcard_list_businesses` is the read
+   tool) before cold-searching the market, and capture each lead's address and service area
+   while researching.
 1. **Stage** — `postcard_stage_leads` with `{name, category, website}` per lead. The staging
    bar is enforced: no website, no entry. Duplicates are rejected naming the existing record;
    never try to merge.
@@ -140,39 +203,3 @@ never pitched.
 A business with an active participation (`prospecting` through `paid`) cannot be disqualified,
 and its last reachable contact cannot be deleted — corrections go through
 `postcard_save_contact`, not removal. The tools enforce both guards and their errors say so.
-
-# What a good outreach email looks like
-
-The operator's own `outreach_instructions` and sender profile (from settings, served in
-`postcard_get_campaign_status` and `postcard://reference/sender`) are the voice. These are the
-structural expectations beneath them.
-
-## Structure
-
-1. **Lead with the hook.** The first line proves this email could only have been written to
-   this business ("Saw you just opened the second location on Sagamore Parkway…"). Never open
-   with who we are.
-2. **One paragraph of premise-grounded relevance** — why a shared postcard in their market
-   reaches their customers. Local, concrete, short.
-3. **The offer, plainly:** one postcard, 8 local businesses, **one {category} per card** —
-   exclusivity is the product. Use the real price from settings; never invent or discount.
-4. **Scarcity, honestly:** the real fill state ("5 of 8 spots filled, closes Friday") from
-   campaign status. Never fabricate urgency.
-5. **One ask.** A single, low-friction question ("Want the {category} spot before I offer it
-   on?"). No bullet lists of benefits, no attachments, no links beyond what's needed.
-
-## Tone
-
-- Like a local writing to a local — plain, specific, brief. Read the operator's
-  `outreach_instructions` and follow them over anything here if they conflict.
-- 90–140 words in the body. Short subject, concrete and non-spammy
-  ("The roofer spot on June's Lafayette postcard").
-- Sign with the operator's signature from settings, verbatim.
-
-## Discipline
-
-- Price: from settings (`default_slot_price_cents`) or the participation's asking price —
-  stated in dollars, no invented discounts.
-- Claims: only what research evidence supports; every hook used must come from the record.
-- You draft; the operator sends. Never write "I sent you…" or reference prior emails unless
-  they are marked sent in the thread.

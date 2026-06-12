@@ -23,7 +23,8 @@ Companion to the PRD (v3). This document is the build reference: architecture, s
 │                                                                │
 │  plugin/         Claude plugin                                 │
 │    ├── manifest → points at server /mcp                        │
-│    └── skills/   outreach/, postcard-design/ (generated from   │
+│    └── skills/   lead-research/, campaign-outreach/,           │
+│                  postcard-design/ (generated from              │
 │                  guidance/ + skill-specific framing)           │
 │                                                                │
 │  docker-compose.yml   postgres + server (+ web dev server)     │
@@ -254,6 +255,7 @@ Server name `postcard`. All tools return structured content; all errors are acti
 | `postcard_get_campaign_status` | `campaign_id?` (defaults to active) | Campaign, slot/category fill map, **per-category waitlists in order**, pipeline counts, deadline, **settings inline** (price, categories, market, sender profile, outreach instructions) | read-only |
 | `postcard_create_campaign` | `month, deadline, name?, market?` | Create a campaign; name/market/price/slots default from settings. **Instruction-gated:** the tool description and workflow resource direct the agent to call it only on explicit operator request, never to unblock itself. When no campaign exists, campaign-dependent tool errors point to the dashboard and (gated) to this tool | non-destructive |
 | `postcard_list_staged_leads` | `limit?` | Staged businesses awaiting research | read-only |
+| `postcard_list_businesses` | `status?, category?, limit?` | Pipeline read: businesses with research record (premise, hooks, evidence, address, service_area) + contacts — the seeds for network-out discovery | read-only |
 | `postcard_stage_leads` | `leads[] {name, category, website, note?}` | Bulk insert as `staged`; enforces staging bar; dedupes by (name, market) | non-destructive |
 | `postcard_claim_lead` | `business_id` | `staged → researching`, exclusive | non-destructive |
 | `postcard_submit_research` | `business_id, research{premise, hooks[], evidence_urls[], contacts[]}` | `researching → researched`; enforces research bar; creates contact rows | non-destructive |
@@ -276,6 +278,7 @@ Server name `postcard`. All tools return structured content; all errors are acti
 **Resources** — single-sourced from `guidance/` + settings; duplicated into tool responses where the agent must not miss them:
 
 - `postcard://reference/workflow` — the state machines, **step-by-step playbook** (orient → stage → claim → research → attach → draft → read comments → revise → waitlist when blocked), and which tool effects which transition; written so an agent with zero prior context can work the pipeline
+- `postcard://reference/research-strategy` — discovery strategy: **network out from already-researched/contacted leads into a web of leads** (physical neighbors, named partners, shared directories, customer-overlap categories) before cold sweeps; capture each business's `address` and `service_area` during research (groundwork for phase-1.5 proximity grouping)
 - `postcard://reference/quality-bars` — staging bar, research bar (premise vs. hooks defined with examples), the disqualification vocabulary with when-to-use guidance, and the active-is-protected guards
 - `postcard://reference/email-expectations` — what a good outreach email looks like: structure (lead with the hook, one ask, scarcity framing "one {category} per card"), the operator's `outreach_instructions` verbatim, and price discipline (from settings — never invented)
 - `postcard://reference/sender` — the operator's business profile and personal notes, for tailoring emails and for the operator's own card slot
@@ -283,7 +286,7 @@ Server name `postcard`. All tools return structured content; all errors are acti
 - `postcard://reference/template` — description of the active layout template(s) (grid, dimensions, margins)
 - `postcard://reference/pricing` — pricing sheet generated from settings
 
-**Plugin skills** are generated from the same `guidance/` sources at build time: `outreach/SKILL.md` (workflow + quality bars + email expectations + session ritual: always orient via `postcard_get_campaign_status` first; hard rules: never imply an email was sent, never research a disqualified lead, recommend waitlist when exclusivity blocks) and `postcard-design/SKILL.md` (slot constraints, legibility rules — contrast ≥ 4.5:1, one focal element, ≤2 type sizes per slot — plus exemplar and anti-example slots).
+**Plugin skills** are generated from the same `guidance/` sources at build time: `lead-research/SKILL.md` (research strategy + workflow + quality bars: network out from already-researched/contacted leads via `postcard_list_businesses` before cold sweeps, capture address/service area, never research a disqualified lead), `campaign-outreach/SKILL.md` (workflow + email expectations + session ritual: always orient via `postcard_get_campaign_status` first, compose campaigns from the researched pool; hard rules: never imply an email was sent, recommend waitlist when exclusivity blocks, never create a campaign to unblock yourself), and `postcard-design/SKILL.md` (slot constraints, legibility rules — contrast ≥ 4.5:1, one focal element, ≤2 type sizes per slot — plus exemplar and anti-example slots).
 
 **REST mirror:** `/api/settings`, `/api/businesses` (incl. nested contacts, marks `operator_viewed_at` on detail fetch), `/api/campaigns/{id}/board` (slots + waitlists + summary roll-ups), `/api/participations/{id}` (status, payment, fulfillment patches), `/api/participations/{id}/promote`, `/api/campaigns/{id}/waitlist-order`, `/api/emails/{id}` (operator edit → next version), `/api/emails/{id}/approve`, `/api/emails/{id}/mark-sent`, `/api/comments`, `/api/activity`, `/api/postcards/{campaign_id}/render` — each dashboard screen hydrates from one composite endpoint.
 

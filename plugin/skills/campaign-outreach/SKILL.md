@@ -1,3 +1,25 @@
+---
+name: campaign-outreach
+description: Compose a postcard campaign from researched businesses and draft outreach emails for human review — attach leads, draft and revise versioned emails, record commitments, and use waitlists when categories fill. Use when working a campaign or writing outreach.
+---
+
+<!-- GENERATED from server/guidance/ by scripts/build_plugin_skills.py — edit there, then `make build-skills`. -->
+
+# Campaign outreach — session ritual
+
+1. **Orient first, always:** call `postcard_get_campaign_status`. It carries the settings
+   (price, categories, market), the sender profile, the outreach instructions, the fill map,
+   and every waitlist. Do not attach or draft before orienting.
+2. **Compose from what is researched:** `postcard_list_businesses` with `status="researched"`
+   is the pool of pitch-ready leads. Fill empty categories first; prior-campaign waitlisted
+   businesses are priority prospects. Attach with `postcard_add_to_campaign`, then draft an
+   email for every attached business — a participation without a draft is dead inventory.
+3. Work the pipeline with the playbook below. The bars are enforced by the tools; when a tool
+   rejects you, the error tells you the valid next action — follow it.
+4. Hard rules: never imply an email was sent (the operator sends from their own inbox);
+   when exclusivity blocks a commitment, move the advertiser to the waitlist; never invent
+   a price; campaign creation is the operator's explicit call, never yours to unblock yourself.
+
 # Pipeline workflow — the playbook
 
 You are the worker on a lead pipeline; the operator is the reviewer. Nothing you do sends
@@ -74,3 +96,39 @@ you never write template HTML. Read slot-anchored feedback with `postcard_get_co
 - Campaign creation is the operator's call. `postcard_create_campaign` exists for when they
   explicitly ask for one — never use it to unblock yourself, and never create campaigns
   speculatively. Campaigns are archived, not deleted; a stray one lingers forever.
+
+# What a good outreach email looks like
+
+The operator's own `outreach_instructions` and sender profile (from settings, served in
+`postcard_get_campaign_status` and `postcard://reference/sender`) are the voice. These are the
+structural expectations beneath them.
+
+## Structure
+
+1. **Lead with the hook.** The first line proves this email could only have been written to
+   this business ("Saw you just opened the second location on Sagamore Parkway…"). Never open
+   with who we are.
+2. **One paragraph of premise-grounded relevance** — why a shared postcard in their market
+   reaches their customers. Local, concrete, short.
+3. **The offer, plainly:** one postcard, 8 local businesses, **one {category} per card** —
+   exclusivity is the product. Use the real price from settings; never invent or discount.
+4. **Scarcity, honestly:** the real fill state ("5 of 8 spots filled, closes Friday") from
+   campaign status. Never fabricate urgency.
+5. **One ask.** A single, low-friction question ("Want the {category} spot before I offer it
+   on?"). No bullet lists of benefits, no attachments, no links beyond what's needed.
+
+## Tone
+
+- Like a local writing to a local — plain, specific, brief. Read the operator's
+  `outreach_instructions` and follow them over anything here if they conflict.
+- 90–140 words in the body. Short subject, concrete and non-spammy
+  ("The roofer spot on June's Lafayette postcard").
+- Sign with the operator's signature from settings, verbatim.
+
+## Discipline
+
+- Price: from settings (`default_slot_price_cents`) or the participation's asking price —
+  stated in dollars, no invented discounts.
+- Claims: only what research evidence supports; every hook used must come from the record.
+- You draft; the operator sends. Never write "I sent you…" or reference prior emails unless
+  they are marked sent in the thread.

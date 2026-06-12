@@ -12,23 +12,49 @@ GENERATED_NOTE = (
     "then `make build-skills`. -->"
 )
 
+RESEARCH_FRONTMATTER = """---
+name: lead-research
+description: Discover and research local business leads through the postcard MCP — stage candidates, claim and research them to the quality bar, and network out from already-contacted leads into a web of researched prospects. Use when finding or researching businesses for the postcard pipeline.
+---
+"""
+
+RESEARCH_FRAMING = """
+# Lead research — session ritual
+
+1. **Orient first, always:** call `postcard_get_campaign_status`. It carries the settings
+   (price, categories, market), the fill map, and pipeline counts. The seed market and the
+   category vocabulary scope everything you discover.
+2. **Network out before searching cold:** read the existing web with
+   `postcard_list_businesses` (researched, plus the campaign board's contacted/interested
+   participations) and follow its edges — neighbors, named partners, shared directories —
+   per the discovery strategy below.
+3. Stage what clears the staging bar, claim before researching, research to the research bar,
+   and record each business's address and service area as you go.
+4. Hard rules: never research a disqualified lead; never re-stage a rejected duplicate —
+   work the existing record; disqualify dead ends with a reason code, never silently drop them.
+"""
+
 OUTREACH_FRONTMATTER = """---
-name: outreach
-description: Work the postcard lead pipeline — stage, claim, research local businesses, draft outreach emails for human review, record commitments, and use waitlists when categories fill. Use whenever operating the postcard MCP server.
+name: campaign-outreach
+description: Compose a postcard campaign from researched businesses and draft outreach emails for human review — attach leads, draft and revise versioned emails, record commitments, and use waitlists when categories fill. Use when working a campaign or writing outreach.
 ---
 """
 
 OUTREACH_FRAMING = """
-# Outreach — session ritual
+# Campaign outreach — session ritual
 
 1. **Orient first, always:** call `postcard_get_campaign_status`. It carries the settings
    (price, categories, market), the sender profile, the outreach instructions, the fill map,
-   and every waitlist. Do not stage, research, or draft before orienting.
-2. Work the pipeline with the playbook below. The bars are enforced by the tools; when a tool
+   and every waitlist. Do not attach or draft before orienting.
+2. **Compose from what is researched:** `postcard_list_businesses` with `status="researched"`
+   is the pool of pitch-ready leads. Fill empty categories first; prior-campaign waitlisted
+   businesses are priority prospects. Attach with `postcard_add_to_campaign`, then draft an
+   email for every attached business — a participation without a draft is dead inventory.
+3. Work the pipeline with the playbook below. The bars are enforced by the tools; when a tool
    rejects you, the error tells you the valid next action — follow it.
-3. Hard rules: never imply an email was sent (the operator sends from their own inbox);
-   never research a disqualified lead; when exclusivity blocks a commitment, move the
-   advertiser to the waitlist; never invent a price.
+4. Hard rules: never imply an email was sent (the operator sends from their own inbox);
+   when exclusivity blocks a commitment, move the advertiser to the waitlist; never invent
+   a price; campaign creation is the operator's explicit call, never yours to unblock yourself.
 """
 
 POSTCARD_FRONTMATTER = """---
@@ -50,36 +76,42 @@ Empty slots stay visible as labeled placeholders — the operator sees the card 
 print today.
 """
 
+SKILL_SPECS = {
+    "lead-research": [
+        RESEARCH_FRONTMATTER,
+        RESEARCH_FRAMING,
+        "research-strategy.md",
+        "workflow.md",
+        "quality-bars.md",
+    ],
+    "campaign-outreach": [
+        OUTREACH_FRONTMATTER,
+        OUTREACH_FRAMING,
+        "workflow.md",
+        "email-expectations.md",
+    ],
+    "postcard-design": [
+        POSTCARD_FRONTMATTER,
+        POSTCARD_FRAMING,
+        "slot-spec.md",
+        "template.md",
+    ],
+}
+
 
 def read(name: str) -> str:
     return (GUIDANCE / name).read_text().strip()
 
 
 def build():
-    outreach = "\n\n".join(
-        [
-            OUTREACH_FRONTMATTER.strip(),
-            GENERATED_NOTE,
-            OUTREACH_FRAMING.strip(),
-            read("workflow.md"),
-            read("quality-bars.md"),
-            read("email-expectations.md"),
-        ]
-    )
-    postcard = "\n\n".join(
-        [
-            POSTCARD_FRONTMATTER.strip(),
-            GENERATED_NOTE,
-            POSTCARD_FRAMING.strip(),
-            read("slot-spec.md"),
-            read("template.md"),
-        ]
-    )
-    (SKILLS / "outreach").mkdir(parents=True, exist_ok=True)
-    (SKILLS / "postcard-design").mkdir(parents=True, exist_ok=True)
-    (SKILLS / "outreach" / "SKILL.md").write_text(outreach + "\n")
-    (SKILLS / "postcard-design" / "SKILL.md").write_text(postcard + "\n")
-    print("wrote plugin/skills/outreach/SKILL.md and plugin/skills/postcard-design/SKILL.md")
+    for skill, parts in SKILL_SPECS.items():
+        frontmatter, framing, *sources = parts
+        body = "\n\n".join(
+            [frontmatter.strip(), GENERATED_NOTE, framing.strip(), *(read(s) for s in sources)]
+        )
+        (SKILLS / skill).mkdir(parents=True, exist_ok=True)
+        (SKILLS / skill / "SKILL.md").write_text(body + "\n")
+        print(f"wrote plugin/skills/{skill}/SKILL.md")
 
 
 if __name__ == "__main__":

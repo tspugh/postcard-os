@@ -14,6 +14,7 @@ EXPECTED_TOOLS = {
     "postcard_get_campaign_status",
     "postcard_create_campaign",
     "postcard_list_staged_leads",
+    "postcard_list_businesses",
     "postcard_stage_leads",
     "postcard_claim_lead",
     "postcard_submit_research",
@@ -138,6 +139,24 @@ async def test_read_only_tools_mutate_nothing(mcp, session):
     assert before == after
 
 
+async def test_list_businesses_reads_research_records(mcp, session):
+    """The network-out seed: researched businesses are readable with their full research
+    record (premise, hooks, evidence, service area) and contacts."""
+    make_researched(session, name="Summit Roofing")
+    session.commit()
+    async with Client(mcp) as client:
+        result = await client.call_tool("postcard_list_businesses", {"status": "researched"})
+        rows = result.structured_content["result"]
+        assert [r["name"] for r in rows] == ["Summit Roofing"]
+        assert rows[0]["premise"] and rows[0]["hooks"] and rows[0]["evidence_urls"]
+        assert "service_area" in rows[0] and "address" in rows[0]
+        assert rows[0]["contacts"], "contacts must ride along for network-out research"
+        empty = await client.call_tool("postcard_list_businesses", {"status": "staged"})
+        assert empty.structured_content["result"] == []
+        with pytest.raises(ToolError, match="not a business status"):
+            await client.call_tool("postcard_list_businesses", {"status": "bogus"})
+
+
 async def test_every_call_logged_to_agent_activity(mcp):
     async with Client(mcp) as client:
         await client.call_tool("postcard_list_staged_leads", {})
@@ -200,6 +219,7 @@ async def test_resources_present_and_single_sourced(mcp):
         uris = {str(r.uri) for r in await client.list_resources()}
         assert {
             "postcard://reference/workflow",
+            "postcard://reference/research-strategy",
             "postcard://reference/quality-bars",
             "postcard://reference/email-expectations",
             "postcard://reference/sender",
