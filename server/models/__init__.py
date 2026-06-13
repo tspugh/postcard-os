@@ -25,6 +25,7 @@ CAMPAIGN_STATUSES = ("draft", "filling", "full", "fulfillment", "completed", "ar
 OUTREACH_STATUSES = ("prospecting", "contacted", "interested", "waitlisted", "committed", "paid", "declined")
 EMAIL_STATUSES = ("in_review", "approved", "sent", "superseded")
 EMAIL_AUTHORS = ("agent", "operator")
+MAIL_PROVIDERS = ("gmail",)  # external mailboxes approved drafts can be handed off to
 COMMENT_ENTITIES = ("email", "postcard_slot", "business")
 EMAIL_CONFIDENCES = ("listed", "scraped", "guessed")
 
@@ -191,6 +192,11 @@ class Email(TimestampMixin, Base):
     )
     approved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # Mail handoff (one-way, no sync-back): set when the approved version is placed into
+    # the operator's own mailbox as a draft. Provider-generic; 'gmail' is the first.
+    delivery_provider: Mapped[str | None] = mapped_column(Text)
+    provider_draft_id: Mapped[str | None] = mapped_column(Text)
+    handed_off_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     participation: Mapped[Participation] = relationship(back_populates="emails")
 

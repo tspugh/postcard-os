@@ -2,7 +2,7 @@
 // structured add-leads. The staging bar is enforced server-side; rejections surface inline.
 import React, { useState } from 'react';
 import { api } from './api.js';
-import { Btn, CategoryTag, columnOf, money, Pill, STATUS_META, StatusDot, timeAgo } from './ui.jsx';
+import { Btn, CategoryTag, columnOf, EMAIL_STATE_META, money, Pill, STATUS_META, StatusDot, timeAgo } from './ui.jsx';
 
 const STAGES = ['staged', 'researching', 'researched', 'contacted', 'interested', 'waitlisted', 'committed', 'declined', 'disqualified'];
 
@@ -83,6 +83,7 @@ function BusinessTable({ rows, onOpen, toggleSort, arrow }) {
             <th>Email</th>
             <th>Phone</th>
             <th>Campaign</th>
+            <th>Outreach</th>
             <th>Price</th>
             <th className="sortable" onClick={() => toggleSort('added')}>Added{arrow('added')}</th>
           </tr>
@@ -96,13 +97,21 @@ function BusinessTable({ rows, onOpen, toggleSort, arrow }) {
             const closed = col === 'disqualified' || col === 'declined';
             return (
               <tr key={b.id} className={closed ? 'row-closed' : ''} onClick={() => onOpen(b.id)}>
-                <td><span className="lt-name">{!b.operator_viewed_at && <span className="unviewed-dot" title="Not yet viewed"></span>}{b.name}</span></td>
+                <td><span className="lt-name">{!b.operator_viewed_at && <span className="unviewed-dot" title="Not yet viewed"></span>}{b.name}
+                  {((b.unresolved_comments || 0) + (p ? p.unresolved_feedback || 0 : 0)) > 0 &&
+                    <span className="fb-badge" title="Unresolved comments on this card">💬 {(b.unresolved_comments || 0) + (p ? p.unresolved_feedback || 0 : 0)}</span>}
+                </span></td>
                 <td><CategoryTag category={b.category} /></td>
                 <td><Pill tone="pill-status"><StatusDot status={col} />{STATUS_META[col].label}{p && p.status === 'paid' ? ' · Paid' : ''}</Pill></td>
                 <td>{primary ? <span className="lt-contact"><span>{primary.name || '—'}</span><span className="sub">{primary.title}</span></span> : <span className="dim">—</span>}</td>
                 <td>{primary && primary.email ? <span>{primary.email} <span className="confidence" title={'Source: ' + (primary.email_source || 'unknown')}>{primary.email_confidence}</span></span> : <span className="dim">—</span>}</td>
                 <td className="num">{primary && primary.phone ? primary.phone : <span className="dim">—</span>}</td>
                 <td>{p ? <span className="dim">{p.campaign.name}{p.status === 'waitlisted' ? ' · WL #' + p.waitlist_order : ''}{p.slot_number ? ' · slot ' + p.slot_number : ''}</span> : <span className="dim">—</span>}</td>
+                <td>{p
+                  ? (p.email_state
+                    ? <Pill tone={EMAIL_STATE_META[p.email_state].tone}>{p.email_state === 'draft_in_review' && p.drafts_in_review > 1 ? p.drafts_in_review + ' drafts in review' : EMAIL_STATE_META[p.email_state].label}</Pill>
+                    : <Pill tone="pill-subtle">no draft yet</Pill>)
+                  : <span className="dim">—</span>}</td>
                 <td className="num">{p ? (isCommitted ? <span className="committed-price">{money(p.committed_amount_cents)}</span> : money(p.asking_price_cents) + ' ask') : <span className="dim">—</span>}</td>
                 <td className="dim num">{timeAgo(b.created_at)}</td>
               </tr>

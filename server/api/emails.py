@@ -23,8 +23,10 @@ def operator_draft(payload: dict, session: Session = Depends(get_session)):
 
 @router.post("/{email_id}/approve")
 def approve(email_id: uuid.UUID, session: Session = Depends(get_session)):
-    """Explicit, recorded state change. Phase 2a will additionally create a Gmail draft here
-    (drafts-only OAuth scope) — the gate logic stays exactly this."""
+    """Explicit, recorded state change. Approval also puts the version on the agent's
+    mail-handoff worklist (approved_awaiting_handoff): the agent places it into the
+    operator's mailbox as a draft via their mail connector and links it back with
+    postcard_link_mail_draft. The server never talks to Gmail and never sends."""
     return email_service.approve(session, email_id)
 
 

@@ -52,6 +52,19 @@ export const STATUS_META = {
   disqualified: { label: 'Disqualified', color: 'var(--c-red)' },
 };
 
+// Derived per-participation rollup of the email thread (server-computed `email_state`):
+// distinguishes "researched, no draft yet" from drafted/approved/in-mailbox/sent at a
+// glance, without it being a stored participation status.
+// Orange = waiting on the agent; accent = waiting on the operator.
+export const EMAIL_STATE_META = {
+  draft_in_review:     { label: 'draft in review',  tone: 'pill-review' },
+  revisions_requested: { label: 'revisions requested', tone: 'pill-orange' },
+  revised:             { label: 'revised — review again', tone: 'pill-review' },
+  approved:            { label: 'approved — ready to send', tone: 'pill-green' },
+  in_mailbox:          { label: 'in Gmail drafts',  tone: 'pill-violet' },
+  sent:                { label: 'sent',             tone: 'pill-subtle' },
+};
+
 export const EMAIL_STATUS_META = {
   in_review:  { label: 'In review',  cls: 'es-review' },
   approved:   { label: 'Approved',   cls: 'es-approved' },

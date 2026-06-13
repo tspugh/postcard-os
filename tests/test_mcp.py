@@ -12,7 +12,9 @@ from tests.conftest import make_campaign, make_researched
 
 EXPECTED_TOOLS = {
     "postcard_get_campaign_status",
+    "postcard_create_campaign",
     "postcard_list_staged_leads",
+    "postcard_list_businesses",
     "postcard_stage_leads",
     "postcard_claim_lead",
     "postcard_submit_research",
@@ -23,6 +25,8 @@ EXPECTED_TOOLS = {
     "postcard_add_to_campaign",
     "postcard_remove_from_campaign",
     "postcard_save_email_draft",
+    "postcard_link_mail_draft",
+    "postcard_list_emails",
     "postcard_get_comments",
     "postcard_record_commitment",
     "postcard_move_to_waitlist",
@@ -71,6 +75,39 @@ async def test_validation_errors_are_actionable(mcp):
             await client.call_tool("postcard_claim_lead", {"business_id": "not-a-uuid"})
 
 
+async def test_create_campaign_accepts_month_and_defaults_from_settings(mcp):
+    async with Client(mcp) as client:
+        result = await client.call_tool(
+            "postcard_create_campaign", {"month": "2026-07", "deadline": "2026-06-25"}
+        )
+        doc = result.data
+        assert doc["month"] == "2026-07-01"
+        assert doc["name"] == "Lafayette, IN July 2026"
+        assert doc["slot_price_cents"] == 29900
+        with pytest.raises(ToolError, match="not a valid month"):
+            await client.call_tool(
+                "postcard_create_campaign", {"month": "July", "deadline": "2026-06-25"}
+            )
+
+
+async def test_no_campaign_errors_point_to_operator(mcp):
+    """With no campaign in the system, campaign-dependent tools must say how to proceed:
+    ask the operator (dashboard), or postcard_create_campaign on explicit instruction only."""
+    import uuid as uuid_mod
+
+    async with Client(mcp) as client:
+        with pytest.raises(ToolError, match="no active campaign"):
+            await client.call_tool(
+                "postcard_save_email_draft",
+                {"participation_id": str(uuid_mod.uuid4()), "subject": "s", "body": "b"},
+            )
+        with pytest.raises(ToolError, match="postcard_create_campaign"):
+            await client.call_tool(
+                "postcard_add_to_campaign",
+                {"campaign_id": str(uuid_mod.uuid4()), "business_id": str(uuid_mod.uuid4())},
+            )
+
+
 async def test_exclusivity_rejection_recommends_waitlist(mcp, session):
     campaign = make_campaign(session)
     from server.services import participations as participation_service
@@ -102,6 +139,24 @@ async def test_read_only_tools_mutate_nothing(mcp, session):
     with SessionLocal() as s:
         after = [(b.name, b.status, b.operator_viewed_at) for b in s.scalars(select(Business))]
     assert before == after
+
+
+async def test_list_businesses_reads_research_records(mcp, session):
+    """The network-out seed: researched businesses are readable with their full research
+    record (premise, hooks, evidence, service area) and contacts."""
+    make_researched(session, name="Summit Roofing")
+    session.commit()
+    async with Client(mcp) as client:
+        result = await client.call_tool("postcard_list_businesses", {"status": "researched"})
+        rows = result.structured_content["result"]
+        assert [r["name"] for r in rows] == ["Summit Roofing"]
+        assert rows[0]["premise"] and rows[0]["hooks"] and rows[0]["evidence_urls"]
+        assert "service_area" in rows[0] and "address" in rows[0]
+        assert rows[0]["contacts"], "contacts must ride along for network-out research"
+        empty = await client.call_tool("postcard_list_businesses", {"status": "staged"})
+        assert empty.structured_content["result"] == []
+        with pytest.raises(ToolError, match="not a business status"):
+            await client.call_tool("postcard_list_businesses", {"status": "bogus"})
 
 
 async def test_every_call_logged_to_agent_activity(mcp):
@@ -166,8 +221,10 @@ async def test_resources_present_and_single_sourced(mcp):
         uris = {str(r.uri) for r in await client.list_resources()}
         assert {
             "postcard://reference/workflow",
+            "postcard://reference/research-strategy",
             "postcard://reference/quality-bars",
             "postcard://reference/email-expectations",
+            "postcard://reference/mail-handoff",
             "postcard://reference/sender",
             "postcard://reference/slot-spec",
             "postcard://reference/template",

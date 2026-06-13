@@ -113,10 +113,19 @@ def list_staged(session: Session, limit: int = 50) -> list[dict]:
     return [business_to_dict(b, include_contacts=False) for b in rows]
 
 
-def list_businesses(session: Session, status: str | None = None) -> list[dict]:
+def list_businesses(
+    session: Session,
+    status: str | None = None,
+    category: str | None = None,
+    limit: int | None = None,
+) -> list[dict]:
     q = select(Business).order_by(Business.created_at.desc())
     if status:
         q = q.where(Business.status == status)
+    if category:
+        q = q.where(Business.category == category.strip().lower())
+    if limit:
+        q = q.limit(limit)
     return [business_to_dict(b) for b in session.scalars(q)]
 
 
