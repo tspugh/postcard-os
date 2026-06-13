@@ -3,8 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { api } from './api.js';
 import {
-  ACTIVE_CAMPAIGN_STATUSES, Btn, CategoryTag, fulfillDone, money, Pill, shortDate,
-  StatusDot, timeAgo,
+  ACTIVE_CAMPAIGN_STATUSES, Btn, CategoryTag, EMAIL_STATE_META, fulfillDone, money, Pill,
+  shortDate, StatusDot, timeAgo,
 } from './ui.jsx';
 
 const LIFECYCLE = ['draft', 'filling', 'full', 'fulfillment', 'completed', 'archived'];
@@ -95,14 +95,25 @@ function StatStrip({ stats }) {
 
 function ParticipationCard({ p, onOpen }) {
   const isCommitted = p.status === 'committed' || p.status === 'paid';
+  const feedback = (p.unresolved_feedback || 0) + (p.business_unresolved_comments || 0);
   return (
     <button className="lead-card" onClick={() => onOpen(p.business_id)}>
-      <div className="lead-top"><span className="lead-name">{p.business_name}</span></div>
+      <div className="lead-top">
+        <span className="lead-name">{p.business_name}</span>
+        {feedback > 0 && <span className="fb-badge" title={feedback + ' unresolved comment' + (feedback > 1 ? 's' : '')}>💬 {feedback}</span>}
+      </div>
       <div className="lead-tags">
         <CategoryTag category={p.category} />
         {p.status === 'waitlisted' && <Pill tone="pill-orange">#{p.waitlist_order} waitlist</Pill>}
         {p.status === 'paid' && <Pill tone="pill-green">paid</Pill>}
-        {p.drafts_in_review > 0 && <Pill tone="pill-review">{p.drafts_in_review} draft to review</Pill>}
+        {p.email_state && p.email_state !== 'sent' && (
+          <Pill tone={EMAIL_STATE_META[p.email_state].tone}>
+            {p.email_state === 'draft_in_review' && p.drafts_in_review > 1
+              ? p.drafts_in_review + ' drafts to review'
+              : EMAIL_STATE_META[p.email_state].label}
+          </Pill>
+        )}
+        {p.status === 'prospecting' && !p.email_state && <Pill tone="pill-subtle">no draft yet</Pill>}
       </div>
       <div className="lead-foot">
         <span>{timeAgo(p.created_at)}</span>

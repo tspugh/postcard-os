@@ -158,9 +158,11 @@ CREATE TYPE email_status AS ENUM ('in_review','approved','sent','superseded');
 CREATE TYPE email_author AS ENUM ('agent','operator');
 
 -- Phase 1: versioned drafts of one outbound message per participation.
--- The PARTICIPATION is the conversation container. Phase 2a adds
--- gmail_draft_id (set when Approve pushes a Gmail draft — one-way, no sync-back;
--- the approved version is canonical as-of-approval). Phase 2b (chains) adds
+-- The PARTICIPATION is the conversation container. Phase 2a (shipped) adds
+-- delivery_provider / provider_draft_id / handed_off_at — set when the agent places
+-- the approved version into the operator's mailbox as a draft via the operator's own
+-- mail connector (Gmail first; one-way, no sync-back; the approved version is
+-- canonical as-of-approval). Phase 2b (chains) adds
 -- direction ('outbound'|'inbound'), external_message_id, in_reply_to —
 -- inbound replies join the same thread without redesign.
 CREATE TABLE emails (
@@ -244,7 +246,7 @@ CREATE TABLE postcard_drafts (
 - Fulfillment checklist fields editable only at `committed`/`paid`. Campaign may move `full → fulfillment → completed` as slots commit and checklists complete; `archived` is terminal and reversible only by operator.
 - Forward-only by default; the operator UI may correct state backward (logged as an interaction).
 
-**Email versions** — `in_review → approved → sent`, with `in_review → superseded` when a newer version is saved **by either author** (agent via tool, operator via UI edit — attributed accordingly). Approve only from `in_review`; mark-sent only from `approved`. Phase 2a: Approve additionally creates a Gmail draft (see §7); the gate logic is unchanged.
+**Email versions** — `in_review → approved → sent`, with `in_review → superseded` when a newer version is saved **by either author** (agent via tool, operator via UI edit — attributed accordingly). Approve only from `in_review`; mark-sent only from `approved`. Phase 2a (shipped): approval puts the version on the agent's mail-handoff worklist (`approved_awaiting_handoff` on the campaign board) — the agent carries it into the operator's mailbox as a draft and links it via `postcard_link_mail_draft` (see §7); the gate logic is unchanged. Composite documents additionally expose a derived per-participation `email_state` (`null → draft_in_review → approved → in_mailbox → sent`) so the UI can distinguish researched-but-undrafted from drafted at a glance — computed from the thread at read time, never stored.
 
 ## 4. MCP surface
 
@@ -271,7 +273,8 @@ Server name `postcard`. All tools return structured content; all errors are acti
 | `postcard_move_to_waitlist` | `participation_id` | `interested → waitlisted`, appended in order | non-destructive |
 | `postcard_save_postcard_draft` | `campaign_id, slots[], template_id?, notes?` | New postcard draft version | non-destructive |
 | *(phase 2)* `postcard_discover_businesses` | `area, category, limit?` | Places-style bulk discovery → feeds `stage_leads` bar | read-only (external) |
-| *(phase 2a — note)* | | Gmail draft creation is a **side effect of operator Approve**, not an agent tool — the agent never touches Gmail | |
+| `postcard_link_mail_draft` | `email_id, provider_draft_id, provider?='gmail'` | Records that the agent placed an **approved** version into the operator's mailbox as a draft via the operator's own mail connector; rejected for any non-approved version; idempotent on the same draft id; one draft per approved email | non-destructive |
+| `postcard_list_emails` | `status?, campaign_id?, has_unresolved_comments?, limit?` | Filterable read across all email threads with business context (e.g. all approved versions; all drafts with unresolved feedback) | read-only |
 
 *Operator-only actions (waitlist reorder, promotion, payment recording, fulfillment checklist, approve, mark-sent, archive) are REST/UI, deliberately not agent tools — they are the owner-control surface.*
 
@@ -330,7 +333,7 @@ UI: manual, using the PRD's UI Requirements section as the checklist.
 Adopts the founder principle — the system never sends — and makes it structural:
 
 - **Phase 1 (no Gmail at all):** Approve → **Copy** button → operator sends from own inbox → **Mark Sent**. The approved version is canonical.
-- **Phase 2a (Gmail drafts):** operator Approve additionally calls the Gmail API to create a draft of the approved version, storing `gmail_draft_id`. OAuth scope is **limited to draft creation — the application never holds send permission**, so "never sends automatically" is enforced by credentials, not policy. **One-way push, no sync-back:** post-approval edits made inside Gmail are the operator's prerogative and are not mirrored; Gmail is an off-ramp, not a second editor. Mark Sent remains a manual click.
+- **Phase 2a (Gmail drafts — shipped, revised design):** the handoff is **agent-mediated, not server-mediated**. Operator Approve puts the version on `approved_awaiting_handoff` (campaign board); the agent — running in Claude Code with the operator's own Gmail MCP connector in the session — creates the draft in the operator's mailbox (To from the contact on record, subject/body verbatim) and records it with `postcard_link_mail_draft`, which sets `delivery_provider`/`provider_draft_id`/`handed_off_at` and rejects any non-approved version. The revision over the original plan: **the server never holds Google credentials at all** (no OAuth app, no token storage), and provider columns are generic so other mailboxes slot in later. Honesty note superseding the original claim: Gmail has no drafts-only OAuth scope (`gmail.compose` also permits send), so "never sends" was never enforceable by credentials alone — it is enforced structurally instead: the postcard surface has no send verb anywhere, the connector belongs to the operator, and the skill's hard rule is drafts-only. **One-way push, no sync-back:** post-approval edits made inside Gmail are the operator's prerogative and are not mirrored; Gmail is an off-ramp, not a second editor. Mark Sent remains a manual click. With no mail connector in the session, the agent skips handoff and the phase-1 Copy flow stands.
 - **Phase 2b (chains):** inbox ingestion adds `direction`/`external_message_id`/`in_reply_to` to `emails`; replies join the participation's thread, advance outreach status, and capture committed amounts; sent-detection can then retire the manual Mark Sent.
 - A much later opt-in send-on-approve mode is possible but deliberately unplanned.
 
@@ -338,7 +341,7 @@ Adopts the founder principle — the system never sends — and makes it structu
 
 **Phase 1:** `docker-compose up` — `postgres:16` + server image (serves `/api`, `/mcp`, and the built SPA as static files). Runs on localhost or one small private EC2 box (no public exposure required; if on EC2, security-group restrict to your IPs — auth itself is phase 2). Nightly `pg_dump` to a mounted volume.
 
-**Phase 2:** 2a — Gmail draft creation on Approve (drafts-only OAuth scope); basic login; optional `postcard_discover_businesses` Places tool. 2b — inbox ingestion turning emails into chains with per-message thread UI; outreach analytics view; print/mailing-list export (provider-agnostic: import lists, export for USPS/mail houses, no tight integration); postcard artwork generation; tasks module; global search; fuzzy dedupe with approval queue.
+**Phase 2:** 2a — Gmail draft handoff (shipped: agent-mediated via the operator's Gmail MCP connector, see §7); basic login; optional `postcard_discover_businesses` Places tool. 2b — inbox ingestion turning emails into chains with per-message thread UI; outreach analytics view; print/mailing-list export (provider-agnostic: import lists, export for USPS/mail houses, no tight integration); postcard artwork generation; tasks module; global search; fuzzy dedupe with approval queue.
 
 **Phase 3:** conversational gateway — small Discord bot / Twilio webhook on the same box embedding the Agent SDK with this plugin; it is *just another MCP client*, no server changes. Scheduled background runs land in the existing `agent_activity` feed.
 

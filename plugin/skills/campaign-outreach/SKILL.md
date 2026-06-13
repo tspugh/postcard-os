@@ -1,6 +1,6 @@
 ---
 name: campaign-outreach
-description: Compose a postcard campaign from researched businesses and draft outreach emails for human review — attach leads, draft and revise versioned emails, record commitments, and use waitlists when categories fill. Use when working a campaign or writing outreach.
+description: Compose a postcard campaign from researched businesses and draft outreach emails for human review — attach leads, draft and revise versioned emails, hand approved emails into the operator's Gmail drafts via their mail connector, record commitments, and use waitlists when categories fill. Use when working a campaign or writing outreach.
 ---
 
 <!-- GENERATED from server/guidance/ by scripts/build_plugin_skills.py — edit there, then `make build-skills`. -->
@@ -14,11 +14,18 @@ description: Compose a postcard campaign from researched businesses and draft ou
    is the pool of pitch-ready leads. Fill empty categories first; prior-campaign waitlisted
    businesses are priority prospects. Attach with `postcard_add_to_campaign`, then draft an
    email for every attached business — a participation without a draft is dead inventory.
-3. Work the pipeline with the playbook below. The bars are enforced by the tools; when a tool
+3. **Work the two worklists on the campaign board:** `approved_awaiting_handoff` —
+   operator-approved emails not yet in their mailbox: if a mail connector (Gmail first) is
+   available, create each as a draft in the operator's mailbox (verbatim, addressed to the
+   contact on record) and link it with `postcard_link_mail_draft`; no connector, skip — the
+   operator's Copy flow still works. And `revision_requests` — drafts with operator
+   feedback newer than your latest version: read the comments, save the next version.
+4. Work the pipeline with the playbook below. The bars are enforced by the tools; when a tool
    rejects you, the error tells you the valid next action — follow it.
-4. Hard rules: never imply an email was sent (the operator sends from their own inbox);
-   when exclusivity blocks a commitment, move the advertiser to the waitlist; never invent
-   a price; campaign creation is the operator's explicit call, never yours to unblock yourself.
+5. Hard rules: never send an email and never imply one was sent (drafts in the operator's
+   mailbox are as far as you go — sending is the operator's hand); when exclusivity blocks
+   a commitment, move the advertiser to the waitlist; never invent a price; campaign
+   creation is the operator's explicit call, never yours to unblock yourself.
 
 # Pipeline workflow — the playbook
 
@@ -31,6 +38,15 @@ email or spends money. Every tool call is logged to a visible activity feed.
 slot/category fill map, every waitlist in order, pipeline counts, and the operator's settings
 (default price, category vocabulary, seed market, sender profile, outreach instructions) in
 one call. Never assume pricing, categories, or market — read them.
+
+The same call carries your worklists: `approved_awaiting_handoff` (approved emails to place
+into the operator's mailbox — see mail handoff), `revision_requests` (drafts whose operator
+feedback is newer than your latest version), and `open_feedback` — every unresolved operator
+comment, business-level included. Address a business comment by updating the record it points
+at (research, contacts, category); comments are resolved by the operator, never by you — a
+resolved comment is finished or obsolete, so it never reappears in your lists. When you need
+more than the worklists, `postcard_list_emails` reads across all threads with filters
+(status, campaign, unresolved feedback).
 
 ## The lead state machine (businesses)
 
@@ -70,12 +86,21 @@ any pre-commitment state → declined (operator)
 6. **Draft** — `postcard_save_email_draft`. Every save creates a new version in review;
    nothing you write is sendable without operator approval. You never mark anything sent —
    never imply an email was sent.
-7. **Revise** — read operator feedback with `postcard_get_comments` and save the next version
-   responding to the specific comments. An operator edit may appear as a version authored by
-   the operator; treat it as the new baseline.
-8. **Commit** — when the operator relays a "yes", `postcard_record_commitment` with the
+7. **Revise** — the campaign board's `revision_requests` lists every draft whose operator
+   feedback is newer than your latest version: read the comments with `postcard_get_comments`
+   (`entity_type="email"`, the email id) and save the next version responding to the
+   specific comments — that flips the card to "revised" for the operator to re-review.
+   An operator edit may appear as a version authored by the operator; treat it as the new
+   baseline. You never resolve comments; the operator resolves them when satisfied.
+8. **Hand off** — once the operator approves, the version appears in
+   `approved_awaiting_handoff` on the campaign board: place it into the operator's mailbox
+   as a draft via their connected mail tool (Gmail first) and record the linkage with
+   `postcard_link_mail_draft`. Verbatim content, drafts only, never send — see
+   `postcard://reference/mail-handoff`. No mail tool connected? Skip; the operator's Copy
+   button flow still works.
+9. **Commit** — when the operator relays a "yes", `postcard_record_commitment` with the
    negotiated amount in cents.
-9. **Waitlist** — if the commitment is rejected because the category is already won, do what
+10. **Waitlist** — if the commitment is rejected because the category is already won, do what
    the error says: `postcard_move_to_waitlist`. Waitlists are preserved revenue — excess
    demand is never declined, and waitlisted businesses surface as priority prospects next
    campaign. Promotion from the waitlist is an operator action, not yours.
@@ -89,6 +114,8 @@ you never write template HTML. Read slot-anchored feedback with `postcard_get_co
 ## Hard rules
 
 - Never imply an email was sent; sending is the operator's hand on their own mail client.
+  Handing an **approved** version into their drafts folder is your job (mail handoff) —
+  sending it never is, and unapproved versions never leave the dashboard.
 - Never research or re-stage a disqualified lead.
 - When exclusivity blocks a commitment, recommend (and use) the waitlist.
 - Active advertisers are protected: no disqualification, no deleting their last contact.
@@ -132,3 +159,47 @@ structural expectations beneath them.
 - Claims: only what research evidence supports; every hook used must come from the record.
 - You draft; the operator sends. Never write "I sent you…" or reference prior emails unless
   they are marked sent in the thread.
+
+# Mail handoff — placing approved emails into the operator's drafts
+
+Approved ≠ sent. Once the operator approves a version in the dashboard, your job is to
+carry it into the operator's **own mailbox as a draft**, so sending is one click in their
+mail client. Gmail is the first supported provider; the flow is the same for any future
+one. The postcard server never talks to the mailbox — you do, through the operator's
+connected mail tool (e.g. a Gmail MCP connector with a create-draft capability).
+
+## When
+
+`postcard_get_campaign_status` returns `approved_awaiting_handoff` on the campaign board:
+every approved version not yet handed off, with recipient (`to`), `subject`, and `body`.
+Work this list during the session ritual, right after orienting.
+
+## How
+
+1. **Check for a connected mail tool.** If no Gmail (or other mail) connector is available
+   in your session, skip the handoff entirely and tell the operator the dashboard's Copy
+   button flow still works. Never improvise delivery and never treat a missing connector
+   as something to work around.
+2. **Create the draft** in the operator's mailbox:
+   - **To:** the `to` address from the record — the business's contact on record. If `to`
+     is null, there is no usable email contact: skip it and flag it as research work.
+     Never guess an address.
+   - **Subject and body: verbatim.** The approved version is canonical — never rephrase,
+     trim, sign differently, or "improve" it on the way to the mailbox.
+3. **Link it back:** `postcard_link_mail_draft(email_id, provider_draft_id)` with the
+   draft id the provider returned. The dashboard then shows the version as in the
+   operator's drafts. Retrying with the same draft id is safe; the tool rejects a second,
+   different draft for the same email.
+
+## Hard rules
+
+- **Drafts only, ever.** You never send, schedule, reply, or touch any other message in
+  the operator's mailbox. If a mail tool offers a send capability, it is not yours to use.
+- **Only approved versions** are handed off — the tool enforces it. In-review work stays
+  in the dashboard.
+- **One approved email, one mailbox draft.** If you accidentally created a duplicate
+  draft, delete the duplicate you just made and keep the linked one.
+- Post-handoff edits the operator makes inside their mailbox are their prerogative — the
+  handoff is one-way, with no sync-back.
+- Sending and **Mark Sent** remain the operator's hands: their mail client, their
+  dashboard click.

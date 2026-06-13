@@ -106,6 +106,9 @@ def email_to_dict(e: Email) -> dict:
         "status": e.status,
         "approved_at": _iso(e.approved_at),
         "sent_at": _iso(e.sent_at),
+        "delivery_provider": e.delivery_provider,
+        "provider_draft_id": e.provider_draft_id,
+        "handed_off_at": _iso(e.handed_off_at),
         "created_at": _iso(e.created_at),
     }
 

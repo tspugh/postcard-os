@@ -44,6 +44,11 @@ def register_resources(mcp: FastMCP) -> None:
             f"\n## Operator's outreach instructions (verbatim)\n\n{instructions}\n"
         )
 
+    @mcp.resource("postcard://reference/mail-handoff", mime_type="text/markdown")
+    def mail_handoff() -> str:
+        """How approved emails are handed into the operator's mailbox as drafts via their connected mail tool (Gmail first) — drafts only, verbatim, never send."""
+        return _guidance("mail-handoff.md")
+
     @mcp.resource("postcard://reference/sender", mime_type="text/markdown")
     def sender() -> str:
         """The operator's own business profile and personal notes — sender context for every email."""

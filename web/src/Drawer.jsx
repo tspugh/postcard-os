@@ -257,68 +257,145 @@ function MoneySection({ p, act, toast }) {
 }
 
 // ---------- email thread ----------
+// One card, newest version by default; the tiny ←/→ pager in the corner flips through
+// prior versions for comparison (no diff — you just look at the one you want).
 function EmailThread({ p, act, toast }) {
-  const [editingId, setEditingId] = useState(null);
+  const [idx, setIdx] = useState(0);
+  const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState({ subject: '', body: '' });
-  const maxV = Math.max(...p.emails.map((e) => e.version));
+  useEffect(() => { setIdx(0); setEditing(false); }, [p.id, p.emails.length]);
 
-  const approve = (e) => act(() => api.post('/emails/' + e.id + '/approve')
-    .then(() => toast('Approved — copy it and send from your inbox.')));
+  const emails = p.emails; // newest first
+  const e = emails[Math.min(idx, emails.length - 1)];
+  const maxV = Math.max(...emails.map((x) => x.version));
+  const meta = EMAIL_STATUS_META[e.status];
 
-  const copy = (e) => {
+  const approve = () => act(() => api.post('/emails/' + e.id + '/approve')
+    .then(() => toast('Approved — the agent will place it in your Gmail drafts (Copy still works).')));
+
+  const copy = () => {
     const text = 'Subject: ' + e.subject + '\n\n' + e.body;
     if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
     toast('Copied to clipboard');
   };
 
-  const markSent = (e) => act(() => api.post('/emails/' + e.id + '/mark-sent')
+  const markSent = () => act(() => api.post('/emails/' + e.id + '/mark-sent')
     .then(() => toast('Marked sent — moved to Contacted.')));
 
   const saveEdit = () => act(() => api.post('/emails', { participation_id: p.id, subject: draft.subject, body: draft.body })
-    .then(() => { setEditingId(null); toast('Saved as next version, attributed to you.'); }));
+    .then(() => { setEditing(false); setIdx(0); toast('Saved as next version, attributed to you.'); }));
 
   return (
     <section className="dsec">
-      <div className="dsec-label">Email thread <span className="meta-dim">({p.emails.length} version{p.emails.length === 1 ? '' : 's'}, newest first)</span></div>
-      <div className="email-list">
-        {p.emails.map((e) => {
-          const meta = EMAIL_STATUS_META[e.status];
-          const isEditing = editingId === e.id;
-          return (
-            <article key={e.id} className={'email-card ' + meta.cls}>
-              <header className="email-head">
-                <span className={'email-status ' + meta.cls}>{meta.label}</span>
-                <span className="email-author">{e.author === 'agent' ? 'Agent' : 'Grant'}</span>
-                <span className="meta-dim">v{e.version} · {timeAgo(e.created_at)}</span>
-              </header>
-              {isEditing ? (
-                <div className="email-edit">
-                  <input value={draft.subject} onChange={(ev) => setDraft({ ...draft, subject: ev.target.value })} />
-                  <textarea rows={9} value={draft.body} onChange={(ev) => setDraft({ ...draft, body: ev.target.value })}></textarea>
-                  <div className="cf-actions">
-                    <Btn small kind="btn-primary" onClick={saveEdit}>Save as v{maxV + 1}</Btn>
-                    <Btn small onClick={() => setEditingId(null)}>Cancel</Btn>
-                  </div>
-                </div>
-              ) : (
-                <div className="email-content">
-                  <div className="email-subject">{e.subject}</div>
-                  <pre className="email-body">{e.body}</pre>
-                </div>
-              )}
-              {!isEditing && (
-                <footer className="email-actions">
-                  <Btn small kind="btn-primary" disabled={e.status !== 'in_review'} title={e.status !== 'in_review' ? 'Approve is only available on in-review versions' : ''} onClick={() => approve(e)}>Approve</Btn>
-                  <Btn small disabled={e.status !== 'in_review'} title={e.status !== 'in_review' ? 'Only the in-review version can be edited' : 'Saves as the next version, attributed to you'} onClick={() => { setEditingId(e.id); setDraft({ subject: e.subject, body: e.body }); }}>Edit</Btn>
-                  <Btn small disabled={e.status !== 'approved'} title={e.status !== 'approved' ? 'Copy is enabled once approved' : ''} onClick={() => copy(e)}>Copy</Btn>
-                  <Btn small disabled={e.status !== 'approved'} title={e.status !== 'approved' ? 'Mark Sent is enabled once approved' : 'You send it from your own inbox'} onClick={() => markSent(e)}>Mark Sent</Btn>
-                </footer>
-              )}
-            </article>
-          );
-        })}
+      <div className="dsec-label-row">
+        <div className="dsec-label">Email
+          {p.email_state === 'revised' && idx === 0 && <Pill tone="pill-review">new version since your feedback</Pill>}
+        </div>
+        <div className="ver-pager" title="Flip through versions to compare">
+          <button className="wl-btn" disabled={idx >= emails.length - 1} title="Older version" onClick={() => { setIdx(idx + 1); setEditing(false); }}>←</button>
+          <span className="meta-dim">v{e.version} of {maxV}{idx === 0 ? ' · latest' : ''}</span>
+          <button className="wl-btn" disabled={idx === 0} title="Newer version" onClick={() => { setIdx(idx - 1); setEditing(false); }}>→</button>
+        </div>
       </div>
+      <article className={'email-card ' + meta.cls}>
+        <header className="email-head">
+          <span className={'email-status ' + meta.cls}>{meta.label}</span>
+          {e.provider_draft_id && (
+            <a className="email-status es-handoff" href="https://mail.google.com/mail/u/0/#drafts"
+              target="_blank" rel="noopener noreferrer"
+              title={'Draft created in ' + (e.delivery_provider || 'your mailbox') + ' by the agent ' + timeAgo(e.handed_off_at) + ' — send it from there'}>
+              In {e.delivery_provider === 'gmail' ? 'Gmail' : e.delivery_provider} drafts ↗
+            </a>
+          )}
+          <span className="email-author">{e.author === 'agent' ? 'Agent' : 'Grant'}</span>
+          <span className="meta-dim">v{e.version} · {timeAgo(e.created_at)}</span>
+        </header>
+        {editing ? (
+          <div className="email-edit">
+            <input value={draft.subject} onChange={(ev) => setDraft({ ...draft, subject: ev.target.value })} />
+            <textarea rows={9} value={draft.body} onChange={(ev) => setDraft({ ...draft, body: ev.target.value })}></textarea>
+            <div className="cf-actions">
+              <Btn small kind="btn-primary" onClick={saveEdit}>Save as v{maxV + 1}</Btn>
+              <Btn small onClick={() => setEditing(false)}>Cancel</Btn>
+            </div>
+          </div>
+        ) : (
+          <div className="email-content">
+            <div className="email-subject">{e.subject}</div>
+            <pre className="email-body">{e.body}</pre>
+          </div>
+        )}
+        {!editing && <EmailComments e={e} act={act} toast={toast} />}
+        {!editing && (
+          <footer className="email-actions">
+            <Btn small kind="btn-primary" disabled={e.status !== 'in_review'} title={e.status !== 'in_review' ? 'Approve is only available on in-review versions' : ''} onClick={approve}>Approve</Btn>
+            <Btn small disabled={e.status !== 'in_review'} title={e.status !== 'in_review' ? 'Only the in-review version can be edited' : 'Saves as the next version, attributed to you'} onClick={() => { setEditing(true); setDraft({ subject: e.subject, body: e.body }); }}>Edit</Btn>
+            <Btn small disabled={e.status !== 'approved'} title={e.status !== 'approved' ? 'Copy is enabled once approved' : ''} onClick={copy}>Copy</Btn>
+            <Btn small disabled={e.status !== 'approved'} title={e.status !== 'approved' ? 'Mark Sent is enabled once approved' : 'You send it from your own inbox'} onClick={markSent}>Mark Sent</Btn>
+          </footer>
+        )}
+      </article>
     </section>
+  );
+}
+
+// Shared comment renderer: unresolved comments are always visible; resolved ones are
+// collapsed behind a toggle (still on the record, but not obstructive — and invisible
+// to the agent, whose worklists only count unresolved).
+function CommentList({ comments, act }) {
+  const [showResolved, setShowResolved] = useState(false);
+  const open = comments.filter((c) => !c.resolved);
+  const resolved = comments.filter((c) => c.resolved);
+  const resolve = (c) => act(() => api.post('/comments/' + c.id + '/resolve', { resolved: !c.resolved }));
+  const row = (c) => (
+    <div key={c.id} className={'comment' + (c.resolved ? ' resolved' : '')}>
+      <div className="comment-head">
+        <span className="comment-author">{c.author === 'agent' ? 'Agent' : 'Grant'}</span>
+        <span className="meta-dim">{timeAgo(c.created_at)}</span>
+        <button className="resolve-btn" title={c.resolved ? 'Resolved comments are hidden from the agent — reopen to resurface' : 'Resolving hides it from the agent (done or obsolete)'} onClick={() => resolve(c)}>{c.resolved ? 'Resolved ✓' : 'Resolve'}</button>
+      </div>
+      <p className="comment-body">{c.body}</p>
+    </div>
+  );
+  return (
+    <div className="comment-list">
+      {open.map(row)}
+      {resolved.length > 0 && (
+        <button className="resolved-toggle" onClick={() => setShowResolved(!showResolved)}>
+          {showResolved ? '▾ hide' : '▸ show'} {resolved.length} resolved
+        </button>
+      )}
+      {showResolved && resolved.map(row)}
+    </div>
+  );
+}
+
+// Per-version feedback: "request revisions" = leave a comment on the draft. The agent's
+// next session reads it (revision_requests worklist) and saves the next version; you
+// resolve the comment once the revision satisfies it.
+function EmailComments({ e, act, toast }) {
+  const [text, setText] = useState('');
+  const comments = e.comments || [];
+  if (comments.length === 0 && e.status !== 'in_review') return null;
+
+  const add = () => {
+    if (!text.trim()) return;
+    act(() => api.post('/comments', { entity_type: 'email', entity_id: e.id, author: 'grant', body: text.trim() })
+      .then(() => { setText(''); toast('Revision requested — the agent will respond with the next version.'); }));
+  };
+
+  return (
+    <div className="email-feedback">
+      <CommentList comments={comments} act={act} />
+      {e.status === 'in_review' && (
+        <div className="comment-input">
+          <textarea rows={2} placeholder={'Request revisions on v' + e.version + '…'} value={text}
+            onChange={(ev) => setText(ev.target.value)}
+            onKeyDown={(ev) => { if (ev.key === 'Enter' && (ev.metaKey || ev.ctrlKey)) add(); }}></textarea>
+          <Btn small kind="btn-primary" onClick={add} disabled={!text.trim()}>Comment</Btn>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -330,23 +407,10 @@ function CommentsSection({ biz, act }) {
     act(() => api.post('/comments', { entity_type: 'business', entity_id: biz.id, author: 'grant', body: text.trim() })
       .then(() => setText('')));
   };
-  const resolve = (c) => act(() => api.post('/comments/' + c.id + '/resolve', { resolved: !c.resolved }));
-
   return (
     <section className="dsec">
       <div className="dsec-label">Comments</div>
-      <div className="comment-list">
-        {(biz.comments || []).map((c) => (
-          <div key={c.id} className={'comment' + (c.resolved ? ' resolved' : '')}>
-            <div className="comment-head">
-              <span className="comment-author">{c.author === 'agent' ? 'Agent' : 'Grant'}</span>
-              <span className="meta-dim">{timeAgo(c.created_at)}</span>
-              <button className="resolve-btn" onClick={() => resolve(c)}>{c.resolved ? 'Resolved ✓' : 'Resolve'}</button>
-            </div>
-            <p className="comment-body">{c.body}</p>
-          </div>
-        ))}
-      </div>
+      <CommentList comments={biz.comments || []} act={act} />
       <div className="comment-input">
         <textarea rows={2} placeholder="Leave a comment for the agent…" value={text}
           onChange={(e) => setText(e.target.value)}

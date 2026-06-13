@@ -86,6 +86,7 @@ body {
 .pill-orange { color: var(--c-orange); border-color: color-mix(in oklch, var(--c-orange) 35%, transparent); background: color-mix(in oklch, var(--c-orange) 10%, transparent); }
 .pill-red { color: var(--c-red); border-color: color-mix(in oklch, var(--c-red) 35%, transparent); background: color-mix(in oklch, var(--c-red) 10%, transparent); }
 .pill-review { color: var(--accent); border-color: color-mix(in oklch, var(--accent) 40%, transparent); background: color-mix(in oklch, var(--accent) 10%, transparent); }
+.pill-violet { color: var(--c-violet); border-color: color-mix(in oklch, var(--c-violet) 35%, transparent); background: color-mix(in oklch, var(--c-violet) 10%, transparent); }
 .pill-subtle { font-size: 10px; padding: 0 5px; }
 .pill-status { font-size: 12px; padding: 3px 9px; border-radius: 99px; }
 .meta-dim { color: var(--text-3); }
@@ -387,7 +388,13 @@ body {
 .email-status.es-approved { color: var(--c-green); background: color-mix(in oklch, var(--c-green) 12%, transparent); }
 .email-status.es-sent { color: var(--c-blue); background: color-mix(in oklch, var(--c-blue) 12%, transparent); }
 .email-status.es-superseded { color: var(--text-3); background: var(--bg-hover); }
+.email-status.es-handoff { color: var(--c-violet); background: color-mix(in oklch, var(--c-violet) 12%, transparent); text-decoration: none; }
 .email-author { font-weight: 600; color: var(--text-2); }
+.email-feedback { padding: 9px 13px 11px; border-top: 1px dashed var(--border); }
+.ver-pager { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; }
+.resolved-toggle { background: none; border: none; color: var(--text-3); font-size: 11px; cursor: pointer; padding: 2px 0; text-align: left; }
+.resolved-toggle:hover { color: var(--text-2); }
+.fb-badge { font-size: 11px; color: var(--c-orange); margin-left: 6px; white-space: nowrap; }
 .email-content { padding: 11px 13px; }
 .email-subject { font-weight: 600; font-size: 13.5px; margin-bottom: 7px; }
 .email-body { margin: 0; font-family: var(--font-ui); font-size: 13px; line-height: 1.55; color: var(--text-2); white-space: pre-wrap; word-break: break-word; }

@@ -36,7 +36,7 @@ RESEARCH_FRAMING = """
 
 OUTREACH_FRONTMATTER = """---
 name: campaign-outreach
-description: Compose a postcard campaign from researched businesses and draft outreach emails for human review — attach leads, draft and revise versioned emails, record commitments, and use waitlists when categories fill. Use when working a campaign or writing outreach.
+description: Compose a postcard campaign from researched businesses and draft outreach emails for human review — attach leads, draft and revise versioned emails, hand approved emails into the operator's Gmail drafts via their mail connector, record commitments, and use waitlists when categories fill. Use when working a campaign or writing outreach.
 ---
 """
 
@@ -50,11 +50,18 @@ OUTREACH_FRAMING = """
    is the pool of pitch-ready leads. Fill empty categories first; prior-campaign waitlisted
    businesses are priority prospects. Attach with `postcard_add_to_campaign`, then draft an
    email for every attached business — a participation without a draft is dead inventory.
-3. Work the pipeline with the playbook below. The bars are enforced by the tools; when a tool
+3. **Work the two worklists on the campaign board:** `approved_awaiting_handoff` —
+   operator-approved emails not yet in their mailbox: if a mail connector (Gmail first) is
+   available, create each as a draft in the operator's mailbox (verbatim, addressed to the
+   contact on record) and link it with `postcard_link_mail_draft`; no connector, skip — the
+   operator's Copy flow still works. And `revision_requests` — drafts with operator
+   feedback newer than your latest version: read the comments, save the next version.
+4. Work the pipeline with the playbook below. The bars are enforced by the tools; when a tool
    rejects you, the error tells you the valid next action — follow it.
-4. Hard rules: never imply an email was sent (the operator sends from their own inbox);
-   when exclusivity blocks a commitment, move the advertiser to the waitlist; never invent
-   a price; campaign creation is the operator's explicit call, never yours to unblock yourself.
+5. Hard rules: never send an email and never imply one was sent (drafts in the operator's
+   mailbox are as far as you go — sending is the operator's hand); when exclusivity blocks
+   a commitment, move the advertiser to the waitlist; never invent a price; campaign
+   creation is the operator's explicit call, never yours to unblock yourself.
 """
 
 POSTCARD_FRONTMATTER = """---
@@ -89,6 +96,7 @@ SKILL_SPECS = {
         OUTREACH_FRAMING,
         "workflow.md",
         "email-expectations.md",
+        "mail-handoff.md",
     ],
     "postcard-design": [
         POSTCARD_FRONTMATTER,

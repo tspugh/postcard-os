@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from server.errors import NotFound, ValidationRejected
-from server.models import Business, COMMENT_ENTITIES, Comment, Email, PostcardDraft
+from server.models import Business, COMMENT_ENTITIES, Comment, Email, Interaction, PostcardDraft
 from server.services.serialize import comment_to_dict
 
 _ENTITY_MODEL = {"email": Email, "postcard_slot": PostcardDraft, "business": Business}
@@ -37,6 +37,25 @@ def add_comment(
         body=body,
     )
     session.add(c)
+    # Comments are state-relevant events: land them in the card's timeline too
+    # (postcard_slot comments are campaign-level — no business to anchor to).
+    if entity_type == "email":
+        session.add(
+            Interaction(
+                business_id=target.participation.business_id,
+                participation_id=target.participation_id,
+                type="comment_added",
+                payload={"entity_type": "email", "author": c.author, "email_version": target.version, "body": body},
+            )
+        )
+    elif entity_type == "business":
+        session.add(
+            Interaction(
+                business_id=entity_id,
+                type="comment_added",
+                payload={"entity_type": "business", "author": c.author, "body": body},
+            )
+        )
     session.flush()
     return comment_to_dict(c)
 

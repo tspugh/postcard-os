@@ -92,7 +92,11 @@ def register_tools(mcp: FastMCP) -> None:
         """Orient yourself — ALWAYS the first call of a session. Returns the campaign (active
         one by default), slot/category fill map, every waitlist in order, pipeline counts, and
         the operator's settings inline: default price, category vocabulary, seed market,
-        sender business profile, and outreach instructions."""
+        sender business profile, and outreach instructions. The campaign board also carries
+        your two worklists: approved_awaiting_handoff — operator-approved emails not yet
+        placed into their mailbox as drafts (see postcard://reference/mail-handoff) — and
+        revision_requests — drafts with unresolved operator feedback newer than your latest
+        version (read the comments, save the next version)."""
         with session_scope() as session:
             try:
                 return summary_service.get_campaign_status(
@@ -266,6 +270,45 @@ def register_tools(mcp: FastMCP) -> None:
                 )
             except DomainError as e:
                 raise ToolError(_hint_if_no_campaign(session, e.message))
+
+    @mcp.tool(annotations=READ_ONLY)
+    def postcard_list_emails(
+        status: str | None = None,
+        campaign_id: str | None = None,
+        has_unresolved_comments: bool | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        """Read email versions across all threads with business context, newest first.
+        Filter by status (in_review/approved/sent/superseded), campaign, and/or unresolved
+        operator feedback — e.g. status='approved' for every approved version (including
+        already-handed-off ones), or has_unresolved_comments=true for drafts awaiting your
+        revision. Each row carries unresolved_comments and the mail-handoff fields."""
+        with session_scope() as session:
+            try:
+                return email_service.list_emails(
+                    session,
+                    status=status,
+                    campaign_id=_uuid(campaign_id, "campaign") if campaign_id else None,
+                    has_unresolved_comments=has_unresolved_comments,
+                    limit=limit,
+                )
+            except DomainError as e:
+                raise ToolError(e.message)
+
+    @mcp.tool(annotations=NON_DESTRUCTIVE)
+    def postcard_link_mail_draft(email_id: str, provider_draft_id: str, provider: str = "gmail") -> dict:
+        """After you place an APPROVED email into the operator's mailbox as a draft (via
+        their connected mail tool — Gmail first), record the linkage here so the dashboard
+        shows it. Subject and body go to the mailbox verbatim, addressed to the contact on
+        record; only approved versions can be handed off, and you never send. Read
+        postcard://reference/mail-handoff before your first handoff."""
+        with session_scope() as session:
+            try:
+                return email_service.link_provider_draft(
+                    session, _uuid(email_id, "email"), provider, provider_draft_id
+                )
+            except DomainError as e:
+                raise ToolError(e.message)
 
     @mcp.tool(annotations=READ_ONLY)
     def postcard_get_comments(entity_type: str, entity_id: str, unresolved_only: bool = False) -> list[dict]:
