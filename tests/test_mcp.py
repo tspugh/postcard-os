@@ -12,6 +12,7 @@ from tests.conftest import make_campaign, make_researched
 
 EXPECTED_TOOLS = {
     "postcard_get_campaign_status",
+    "postcard_create_campaign",
     "postcard_list_staged_leads",
     "postcard_stage_leads",
     "postcard_claim_lead",
@@ -69,6 +70,39 @@ async def test_validation_errors_are_actionable(mcp):
         assert "Staging bar" in result.data["rejected"][0]["reason"]
         with pytest.raises(ToolError, match="not a valid business id"):
             await client.call_tool("postcard_claim_lead", {"business_id": "not-a-uuid"})
+
+
+async def test_create_campaign_accepts_month_and_defaults_from_settings(mcp):
+    async with Client(mcp) as client:
+        result = await client.call_tool(
+            "postcard_create_campaign", {"month": "2026-07", "deadline": "2026-06-25"}
+        )
+        doc = result.data
+        assert doc["month"] == "2026-07-01"
+        assert doc["name"] == "Lafayette, IN July 2026"
+        assert doc["slot_price_cents"] == 29900
+        with pytest.raises(ToolError, match="not a valid month"):
+            await client.call_tool(
+                "postcard_create_campaign", {"month": "July", "deadline": "2026-06-25"}
+            )
+
+
+async def test_no_campaign_errors_point_to_operator(mcp):
+    """With no campaign in the system, campaign-dependent tools must say how to proceed:
+    ask the operator (dashboard), or postcard_create_campaign on explicit instruction only."""
+    import uuid as uuid_mod
+
+    async with Client(mcp) as client:
+        with pytest.raises(ToolError, match="no active campaign"):
+            await client.call_tool(
+                "postcard_save_email_draft",
+                {"participation_id": str(uuid_mod.uuid4()), "subject": "s", "body": "b"},
+            )
+        with pytest.raises(ToolError, match="postcard_create_campaign"):
+            await client.call_tool(
+                "postcard_add_to_campaign",
+                {"campaign_id": str(uuid_mod.uuid4()), "business_id": str(uuid_mod.uuid4())},
+            )
 
 
 async def test_exclusivity_rejection_recommends_waitlist(mcp, session):

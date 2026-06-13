@@ -252,6 +252,7 @@ Server name `postcard`. All tools return structured content; all errors are acti
 | Tool | Args (essentials) | Effect | Annotations |
 |---|---|---|---|
 | `postcard_get_campaign_status` | `campaign_id?` (defaults to active) | Campaign, slot/category fill map, **per-category waitlists in order**, pipeline counts, deadline, **settings inline** (price, categories, market, sender profile, outreach instructions) | read-only |
+| `postcard_create_campaign` | `month, deadline, name?, market?` | Create a campaign; name/market/price/slots default from settings. **Instruction-gated:** the tool description and workflow resource direct the agent to call it only on explicit operator request, never to unblock itself. When no campaign exists, campaign-dependent tool errors point to the dashboard and (gated) to this tool | non-destructive |
 | `postcard_list_staged_leads` | `limit?` | Staged businesses awaiting research | read-only |
 | `postcard_stage_leads` | `leads[] {name, category, website, note?}` | Bulk insert as `staged`; enforces staging bar; dedupes by (name, market) | non-destructive |
 | `postcard_claim_lead` | `business_id` | `staged → researching`, exclusive | non-destructive |

@@ -3,6 +3,7 @@ service function. The tool surface IS the workflow; operator-only actions (appro
 mark-sent, promote, reorder, payment, fulfillment, archive) are deliberately absent."""
 
 import uuid
+from datetime import date
 from typing import Annotated, Any
 
 from fastmcp import FastMCP
@@ -13,6 +14,7 @@ from server.db import session_scope
 from server.errors import DomainError
 from server.services import (
     businesses as business_service,
+    campaigns as campaign_service,
     comments as comment_service,
     contacts as contact_service,
     emails as email_service,
@@ -31,6 +33,33 @@ def _uuid(value: str, what: str) -> uuid.UUID:
         return uuid.UUID(value)
     except (ValueError, TypeError):
         raise ToolError(f"'{value}' is not a valid {what} id (expected a UUID).")
+
+
+def _date(value: str, what: str, allow_month_only: bool = False) -> date:
+    raw = (value or "").strip()
+    if allow_month_only and len(raw) == 7:
+        raw += "-01"
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        expected = "YYYY-MM or YYYY-MM-DD" if allow_month_only else "YYYY-MM-DD"
+        raise ToolError(f"'{value}' is not a valid {what} (expected {expected}).")
+
+
+NO_CAMPAIGN_HINT = (
+    " Note: there is no active campaign right now, so there is nothing to attach businesses "
+    "to or draft against. Tell the operator to create a campaign in the dashboard so you can "
+    "proceed — or, ONLY if the operator has explicitly asked you for a new campaign, create "
+    "it with postcard_create_campaign."
+)
+
+
+def _hint_if_no_campaign(session, message: str) -> str:
+    """Campaign-dependent tools fail confusingly when the real problem is that no
+    campaign exists yet — append the way forward."""
+    if campaign_service.active_campaign(session) is None:
+        return message + NO_CAMPAIGN_HINT
+    return message
 
 
 class LeadIn(BaseModel):
@@ -68,6 +97,32 @@ def register_tools(mcp: FastMCP) -> None:
             try:
                 return summary_service.get_campaign_status(
                     session, _uuid(campaign_id, "campaign") if campaign_id else None
+                )
+            except DomainError as e:
+                raise ToolError(e.message)
+
+    @mcp.tool(annotations=NON_DESTRUCTIVE)
+    def postcard_create_campaign(
+        month: str,
+        deadline: str,
+        name: str | None = None,
+        market: str | None = None,
+    ) -> dict:
+        """Create a campaign (one postcard run). OPERATOR-GATED: call this only when the
+        operator has explicitly asked for a new campaign — never to unblock yourself, and
+        never speculatively. Campaigns are archived, not deleted, so a stray one lingers
+        forever. month is 'YYYY-MM' (or 'YYYY-MM-DD'); deadline is 'YYYY-MM-DD'. name
+        defaults to 'market + month'; market defaults to the seed market in settings.
+        Multiple campaigns may run in the same month — when more than one is active, pass
+        campaign_id explicitly to the other tools."""
+        with session_scope() as session:
+            try:
+                return campaign_service.create_campaign(
+                    session,
+                    month=_date(month, "month", allow_month_only=True),
+                    deadline=_date(deadline, "deadline"),
+                    name=name,
+                    market=market,
                 )
             except DomainError as e:
                 raise ToolError(e.message)
@@ -170,7 +225,7 @@ def register_tools(mcp: FastMCP) -> None:
                     session, _uuid(campaign_id, "campaign"), _uuid(business_id, "business"), category
                 )
             except DomainError as e:
-                raise ToolError(e.message)
+                raise ToolError(_hint_if_no_campaign(session, e.message))
 
     @mcp.tool(annotations=GUARDED_DESTRUCTIVE)
     def postcard_remove_from_campaign(participation_id: str) -> dict:
@@ -193,7 +248,7 @@ def register_tools(mcp: FastMCP) -> None:
                     session, _uuid(participation_id, "participation"), subject, body, author="agent"
                 )
             except DomainError as e:
-                raise ToolError(e.message)
+                raise ToolError(_hint_if_no_campaign(session, e.message))
 
     @mcp.tool(annotations=READ_ONLY)
     def postcard_get_comments(entity_type: str, entity_id: str, unresolved_only: bool = False) -> list[dict]:
@@ -248,4 +303,4 @@ def register_tools(mcp: FastMCP) -> None:
                     session, _uuid(campaign_id, "campaign"), slots, template_id=template_id, notes=notes
                 )
             except DomainError as e:
-                raise ToolError(e.message)
+                raise ToolError(_hint_if_no_campaign(session, e.message))
