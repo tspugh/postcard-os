@@ -30,13 +30,13 @@
     // ---- COMMITTED ----
     {
       id: 'b-tippecanoe', name: 'Tippecanoe Roofing Co.', category: 'roofer',
-      website: 'https://tippecanoeroofing.com', source: 'agent:web',
+      website: 'https://tippecanoeroofing.example', source: 'agent:web',
       createdAt: ago(9 * D), viewedAt: ago(8 * D), status: 'researched',
       premise: 'Residential roofing contractor serving Tippecanoe County; primarily asphalt shingle replacement and storm repair. Family-run crew, in business since 2004.',
       hooks: ['Family-owned 22 years', '4.9★ across 210 Google reviews', 'Free storm-damage inspections'],
-      evidence: ['https://tippecanoeroofing.com/about', 'https://google.com/maps/place/tippecanoe-roofing'],
+      evidence: ['https://tippecanoeroofing.example/about', 'https://google.com/maps/place/tippecanoe-roofing'],
       contacts: [
-        { id: 'c1', name: 'Dale Hutchins', title: 'Owner', email: 'dale@tippecanoeroofing.com', emailSource: 'site contact page', emailConfidence: 'listed', phone: '(765) 555-0142', isPrimary: true },
+        { id: 'c1', name: 'Dale Hutchins', title: 'Owner', email: 'dale@tippecanoeroofing.example', emailSource: 'site contact page', emailConfidence: 'listed', phone: '(765) 555-0142', isPrimary: true },
       ],
       participation: {
         status: 'paid', askingPriceCents: 29900, committedAmountCents: 29900,
@@ -60,13 +60,13 @@
     },
     {
       id: 'b-wabash', name: 'Wabash Heating & Air', category: 'hvac',
-      website: 'https://wabashheatingair.com', source: 'operator',
+      website: 'https://wabashheatingair.example', source: 'operator',
       createdAt: ago(8 * D), viewedAt: ago(7 * D), status: 'researched',
       premise: 'HVAC installation and service for greater Lafayette; strong on residential AC replacement and maintenance plans.',
       hooks: ['Same-day service guarantee', 'Carrier factory-authorized dealer'],
-      evidence: ['https://wabashheatingair.com'],
+      evidence: ['https://wabashheatingair.example'],
       contacts: [
-        { id: 'c2', name: 'Marcy Pollard', title: 'Office Manager', email: 'office@wabashheatingair.com', emailSource: 'https://wabashheatingair.com/contact', emailConfidence: 'listed', phone: '(765) 555-0177', isPrimary: true },
+        { id: 'c2', name: 'Marcy Pollard', title: 'Office Manager', email: 'office@wabashheatingair.example', emailSource: 'https://wabashheatingair.example/contact', emailConfidence: 'listed', phone: '(765) 555-0177', isPrimary: true },
       ],
       participation: {
         status: 'committed', askingPriceCents: 29900, committedAmountCents: 27500,
@@ -85,13 +85,13 @@
     },
     {
       id: 'b-redbrick', name: 'Red Brick Bistro', category: 'restaurant',
-      website: 'https://redbrickbistro.com', source: 'agent:web',
+      website: 'https://redbrickbistro.example', source: 'agent:web',
       createdAt: ago(7 * D), viewedAt: ago(6 * D), status: 'researched',
       premise: 'Downtown Lafayette bistro; lunch and dinner, locally sourced menu, popular patio season May\u2013September.',
       hooks: ['Voted Best Patio 2025 \u2014 Journal & Courier', 'New summer menu launching June'],
-      evidence: ['https://redbrickbistro.com/menu', 'https://jconline.com/best-of-2025'],
+      evidence: ['https://redbrickbistro.example/menu', 'https://jconline.com/best-of-2025'],
       contacts: [
-        { id: 'c3', name: 'Anthony Reyes', title: 'Owner', email: 'anthony@redbrickbistro.com', emailSource: 'scraped from site footer', emailConfidence: 'scraped', phone: null, isPrimary: true },
+        { id: 'c3', name: 'Anthony Reyes', title: 'Owner', email: 'anthony@redbrickbistro.example', emailSource: 'scraped from site footer', emailConfidence: 'scraped', phone: null, isPrimary: true },
       ],
       participation: {
         status: 'committed', askingPriceCents: 29900, committedAmountCents: 29900,
@@ -112,13 +112,13 @@
     // ---- WAITLISTED ----
     {
       id: 'b-summit', name: 'Summit Ridge Roofing', category: 'roofer',
-      website: 'https://summitridgeroofing.net', source: 'agent:web',
+      website: 'https://summitridgeroofing.example', source: 'agent:web',
       createdAt: ago(6 * D), viewedAt: ago(5 * D), status: 'researched',
       premise: 'Roofing and exterior contractor covering Lafayette and West Lafayette; metal and asphalt; commercial and residential.',
       hooks: ['Just opened a second location in West Lafayette', 'GAF-certified installer'],
-      evidence: ['https://summitridgeroofing.net/news'],
+      evidence: ['https://summitridgeroofing.example/news'],
       contacts: [
-        { id: 'c4', name: 'Priya Raman', title: 'Co-owner', email: 'priya@summitridgeroofing.net', emailSource: 'https://summitridgeroofing.net/team', emailConfidence: 'listed', phone: '(765) 555-0123', isPrimary: true },
+        { id: 'c4', name: 'Priya Raman', title: 'Co-owner', email: 'priya@summitridgeroofing.example', emailSource: 'https://summitridgeroofing.example/team', emailConfidence: 'listed', phone: '(765) 555-0123', isPrimary: true },
       ],
       participation: {
         status: 'waitlisted', askingPriceCents: 29900, committedAmountCents: null,
@@ -140,11 +140,11 @@
     },
     {
       id: 'b-comfort', name: 'Comfort Zone Mechanical', category: 'hvac',
-      website: 'https://comfortzonemech.com', source: 'agent:web',
+      website: 'https://comfortzonemech.example', source: 'agent:web',
       createdAt: ago(5 * D), viewedAt: ago(4 * D), status: 'researched',
       premise: 'HVAC and light plumbing service shop on the south side; residential maintenance contracts are the core business.',
       hooks: ['$59 tune-up special running now', '24/7 emergency line'],
-      evidence: ['https://comfortzonemech.com/specials'],
+      evidence: ['https://comfortzonemech.example/specials'],
       contacts: [
         { id: 'c5', name: 'Greg Schmitt', title: 'Owner', email: null, emailSource: null, emailConfidence: null, phone: '(765) 555-0190', isPrimary: true },
       ],
@@ -167,13 +167,13 @@
     // ---- INTERESTED ----
     {
       id: 'b-lawn', name: 'Lafayette Lawn & Grade', category: 'landscaper',
-      website: 'https://lafayettelawngrade.com', source: 'agent:web',
+      website: 'https://lafayettelawngrade.example', source: 'agent:web',
       createdAt: ago(5 * D), viewedAt: ago(4 * D), status: 'researched',
       premise: 'Landscaping and grading contractor; mowing contracts, mulch, and small excavation for residential lots.',
       hooks: ['Booked out 3 weeks \u2014 hiring a second crew', 'Veteran-owned'],
-      evidence: ['https://lafayettelawngrade.com', 'https://facebook.com/lafayettelawngrade'],
+      evidence: ['https://lafayettelawngrade.example', 'https://facebook.com/lafayettelawngrade'],
       contacts: [
-        { id: 'c6', name: 'Tom Brodie', title: 'Owner', email: 'tom@lafayettelawngrade.com', emailSource: 'Facebook page', emailConfidence: 'scraped', phone: '(765) 555-0156', isPrimary: true },
+        { id: 'c6', name: 'Tom Brodie', title: 'Owner', email: 'tom@lafayettelawngrade.example', emailSource: 'Facebook page', emailConfidence: 'scraped', phone: '(765) 555-0156', isPrimary: true },
       ],
       participation: {
         status: 'interested', askingPriceCents: 29900, committedAmountCents: null,
@@ -196,13 +196,13 @@
     // ---- CONTACTED ----
     {
       id: 'b-sycamore', name: 'Sycamore Plumbing', category: 'plumber',
-      website: 'https://sycamoreplumbing.com', source: 'agent:web',
+      website: 'https://sycamoreplumbing.example', source: 'agent:web',
       createdAt: ago(4 * D), viewedAt: ago(3 * D), status: 'researched',
       premise: 'Residential plumbing service and repair; water heaters, drain cleaning, fixture installs across Tippecanoe County.',
       hooks: ['3rd-generation family business', 'Up-front flat-rate pricing'],
-      evidence: ['https://sycamoreplumbing.com/about'],
+      evidence: ['https://sycamoreplumbing.example/about'],
       contacts: [
-        { id: 'c7', name: 'Janet Voss', title: 'Co-owner', email: 'janet@sycamoreplumbing.com', emailSource: 'site contact page', emailConfidence: 'listed', phone: '(765) 555-0163', isPrimary: true },
+        { id: 'c7', name: 'Janet Voss', title: 'Co-owner', email: 'janet@sycamoreplumbing.example', emailSource: 'site contact page', emailConfidence: 'listed', phone: '(765) 555-0163', isPrimary: true },
       ],
       participation: {
         status: 'contacted', askingPriceCents: 29900, committedAmountCents: null,
@@ -218,13 +218,13 @@
     },
     {
       id: 'b-fivepoints', name: 'Five Points Auto Care', category: 'auto repair',
-      website: 'https://fivepointsautocare.com', source: 'agent:web',
+      website: 'https://fivepointsautocare.example', source: 'agent:web',
       createdAt: ago(4 * D), viewedAt: ago(3 * D), status: 'researched',
       premise: 'Independent auto repair shop near Five Points; brakes, diagnostics, and fleet maintenance for local small businesses.',
       hooks: ['4.8★ on 340 reviews', 'Loaner cars for repairs over 4 hours'],
-      evidence: ['https://fivepointsautocare.com', 'https://google.com/maps/place/five-points-auto'],
+      evidence: ['https://fivepointsautocare.example', 'https://google.com/maps/place/five-points-auto'],
       contacts: [
-        { id: 'c8', name: 'Ray Delgado', title: 'Owner', email: 'ray@fivepointsautocare.com', emailSource: 'site contact page', emailConfidence: 'listed', phone: '(765) 555-0171', isPrimary: true },
+        { id: 'c8', name: 'Ray Delgado', title: 'Owner', email: 'ray@fivepointsautocare.example', emailSource: 'site contact page', emailConfidence: 'listed', phone: '(765) 555-0171', isPrimary: true },
       ],
       participation: {
         status: 'contacted', askingPriceCents: 29900, committedAmountCents: null,
@@ -248,13 +248,13 @@
     // ---- RESEARCHED (prospecting, drafts in review) ----
     {
       id: 'b-hoosier', name: 'Hoosier Electric LLC', category: 'electrician',
-      website: 'https://hoosierelectricllc.com', source: 'agent:web',
+      website: 'https://hoosierelectricllc.example', source: 'agent:web',
       createdAt: ago(2 * D), viewedAt: ago(1 * D), status: 'researched',
       premise: 'Licensed residential electrician; panel upgrades, EV charger installs, and service calls in Lafayette and West Lafayette.',
       hooks: ['EV charger installs up 3\u00d7 this year (their blog)', 'Licensed & insured, free estimates'],
-      evidence: ['https://hoosierelectricllc.com/blog/ev-chargers', 'https://hoosierelectricllc.com'],
+      evidence: ['https://hoosierelectricllc.example/blog/ev-chargers', 'https://hoosierelectricllc.example'],
       contacts: [
-        { id: 'c9', name: 'Kurt Weaver', title: 'Owner', email: 'kurt@hoosierelectricllc.com', emailSource: 'site contact page', emailConfidence: 'listed', phone: '(765) 555-0118', isPrimary: true },
+        { id: 'c9', name: 'Kurt Weaver', title: 'Owner', email: 'kurt@hoosierelectricllc.example', emailSource: 'site contact page', emailConfidence: 'listed', phone: '(765) 555-0118', isPrimary: true },
       ],
       participation: {
         status: 'prospecting', askingPriceCents: 29900, committedAmountCents: null,
@@ -270,13 +270,13 @@
     },
     {
       id: 'b-riverside', name: 'Riverside Realty Group', category: 'realtor',
-      website: 'https://riversiderealtygroup.com', source: 'agent:web',
+      website: 'https://riversiderealtygroup.example', source: 'agent:web',
       createdAt: ago(2 * D), viewedAt: null, status: 'researched',
       premise: 'Independent residential brokerage, 6 agents; strong in first-time buyers and near-campus rentals-to-owners conversions.',
       hooks: ['Top-10 Tippecanoe County brokerage by 2025 volume', 'Hosting free first-time-buyer seminar June 20'],
-      evidence: ['https://riversiderealtygroup.com/events', 'https://mibor.com/rankings-2025'],
+      evidence: ['https://riversiderealtygroup.example/events', 'https://mibor.com/rankings-2025'],
       contacts: [
-        { id: 'c10', name: 'Dana Okafor', title: 'Managing Broker', email: 'dana@riversiderealtygroup.com', emailSource: 'https://riversiderealtygroup.com/agents', emailConfidence: 'listed', phone: '(765) 555-0135', isPrimary: true },
+        { id: 'c10', name: 'Dana Okafor', title: 'Managing Broker', email: 'dana@riversiderealtygroup.example', emailSource: 'https://riversiderealtygroup.example/agents', emailConfidence: 'listed', phone: '(765) 555-0135', isPrimary: true },
       ],
       participation: {
         status: 'prospecting', askingPriceCents: 29900, committedAmountCents: null,
@@ -294,7 +294,7 @@
     // ---- RESEARCHING ----
     {
       id: 'b-stonecreek', name: 'Stone Creek Landscaping', category: 'landscaper',
-      website: 'https://stonecreeklandscaping.co', source: 'agent:web',
+      website: 'https://stonecreeklandscaping.example', source: 'agent:web',
       createdAt: ago(1 * D), viewedAt: ago(20 * H), status: 'researching',
       claimedAt: ago(35 * 60e3),
       premise: null, hooks: [], evidence: [], contacts: [],
@@ -304,21 +304,21 @@
     // ---- STAGED ----
     {
       id: 'b-maxwell', name: "Maxwell's Auto Body", category: 'auto repair',
-      website: 'https://maxwellsautobody.com', source: 'agent:web',
+      website: 'https://maxwellsautobody.example', source: 'agent:web',
       createdAt: ago(4 * H), viewedAt: null, status: 'staged',
       premise: null, hooks: [], evidence: [], contacts: [],
       participation: null, comments: [],
     },
     {
       id: 'b-courthouse', name: 'Courthouse Realty', category: 'realtor',
-      website: 'https://courthouserealty.com', source: 'agent:web',
+      website: 'https://courthouserealty.example', source: 'agent:web',
       createdAt: ago(4 * H), viewedAt: null, status: 'staged',
       premise: null, hooks: [], evidence: [], contacts: [],
       participation: null, comments: [],
     },
     {
       id: 'b-drainmasters', name: 'Drainmasters Sewer & Drain', category: 'plumber',
-      website: 'https://drainmasters-lafayette.com', source: 'operator',
+      website: 'https://drainmasters-lafayette.example', source: 'operator',
       createdAt: ago(1 * D), viewedAt: ago(22 * H), status: 'staged',
       premise: null, hooks: [], evidence: [], contacts: [],
       participation: null, comments: [],
@@ -327,7 +327,7 @@
     // ---- DISQUALIFIED / DECLINED ----
     {
       id: 'b-roofpros', name: 'Lafayette Roof Pros', category: 'roofer',
-      website: 'https://lafayetteroofpros.com', source: 'agent:web',
+      website: 'https://lafayetteroofpros.example', source: 'agent:web',
       createdAt: ago(6 * D), viewedAt: ago(5 * D), status: 'disqualified',
       dq: { code: 'duplicate', note: 'Same crew as Tippecanoe Roofing Co. — rebrand site, same phone number.' },
       premise: null, hooks: [], evidence: [], contacts: [],
@@ -335,7 +335,7 @@
     },
     {
       id: 'b-bigbox', name: 'BigBox Realty', category: 'realtor',
-      website: 'https://bigboxrealty.com', source: 'agent:web',
+      website: 'https://bigboxrealty.example', source: 'agent:web',
       createdAt: ago(5 * D), viewedAt: ago(5 * D), status: 'disqualified',
       dq: { code: 'bad_fit', note: 'National franchise; ad decisions made at corporate, not local to market.' },
       premise: null, hooks: [], evidence: [], contacts: [],
@@ -343,13 +343,13 @@
     },
     {
       id: 'b-gearhead', name: 'Gearhead Garage', category: 'auto repair',
-      website: 'https://gearheadgaragein.com', source: 'agent:web',
+      website: 'https://gearheadgaragein.example', source: 'agent:web',
       createdAt: ago(6 * D), viewedAt: ago(5 * D), status: 'researched',
       premise: 'Performance and general auto repair shop on Sagamore Pkwy.',
       hooks: ['Sponsors local dirt-track team'],
-      evidence: ['https://gearheadgaragein.com'],
+      evidence: ['https://gearheadgaragein.example'],
       contacts: [
-        { id: 'c11', name: 'Bill Tanner', title: 'Owner', email: 'bill@gearheadgaragein.com', emailSource: 'site contact page', emailConfidence: 'listed', phone: null, isPrimary: true },
+        { id: 'c11', name: 'Bill Tanner', title: 'Owner', email: 'bill@gearheadgaragein.example', emailSource: 'site contact page', emailConfidence: 'listed', phone: null, isPrimary: true },
       ],
       participation: {
         status: 'declined', askingPriceCents: 29900, committedAmountCents: null,

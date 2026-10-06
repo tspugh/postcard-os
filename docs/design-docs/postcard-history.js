@@ -8,13 +8,13 @@
   // A second roofer on the June waitlist (demonstrates ordering / reorder)
   seed.BUSINESSES.push({
     id: 'b-apex', name: 'Apex Exteriors', category: 'roofer',
-    website: 'https://apexexteriors-in.com', source: 'agent:web',
+    website: 'https://apexexteriors-in.example', source: 'agent:web',
     createdAt: ago(4 * D), viewedAt: ago(3 * D), status: 'researched',
     premise: 'Roofing and siding contractor on the north side; insurance-claim specialists for hail and wind damage.',
     hooks: ['Handles the insurance paperwork for you', 'Owens Corning preferred contractor'],
-    evidence: ['https://apexexteriors-in.com/insurance'],
+    evidence: ['https://apexexteriors-in.example/insurance'],
     contacts: [
-      { id: 'c12', name: 'Stan Kowalski', title: 'Owner', email: 'stan@apexexteriors-in.com', emailSource: 'site contact page', emailConfidence: 'listed', phone: null, isPrimary: true },
+      { id: 'c12', name: 'Stan Kowalski', title: 'Owner', email: 'stan@apexexteriors-in.example', emailSource: 'site contact page', emailConfidence: 'listed', phone: null, isPrimary: true },
     ],
     participation: {
       status: 'waitlisted', askingPriceCents: 29900, committedAmountCents: null,

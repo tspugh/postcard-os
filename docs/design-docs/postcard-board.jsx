@@ -163,7 +163,7 @@ function StagingModal({ settings, businesses, onClose, onStage, toast }) {
       <div className="modal" data-screen-label="Stage leads">
         <h3 className="modal-title">Stage leads</h3>
         <p className="modal-sub">One per line: <code>name, category, website</code>. The staging bar is enforced — name + category + working website URL.</p>
-        <textarea rows={6} placeholder={'Lafayette Tire & Lube, auto repair, https://laftirelube.com\nHarrison Homes Realty, realtor, https://harrisonhomes.com'}
+        <textarea rows={6} placeholder={'Lafayette Tire & Lube, auto repair, https://laftirelube.example\nHarrison Homes Realty, realtor, https://harrisonhomes.example'}
           value={text} onChange={(e) => setText(e.target.value)} autoFocus></textarea>
         {results && results.errors.length > 0 && (
           <div className="stage-errors">

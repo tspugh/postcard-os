@@ -328,7 +328,7 @@ function ArchivedCampaign({ may, onOpen }) {
 const PC_COPY = {
   'b-tippecanoe': { headline: 'Storm season is coming', offer: 'Free roof inspection — before the hail does it for you', contact: '(765) 555-0142' },
   'b-wabash': { headline: 'Beat the June heat', offer: 'Free estimate on AC replacement + same-day service', contact: '(765) 555-0177' },
-  'b-redbrick': { headline: 'Best Patio 2025', offer: '10% off lunch, all June', contact: 'redbrickbistro.com' },
+  'b-redbrick': { headline: 'Best Patio 2025', offer: '10% off lunch, all June', contact: 'redbrickbistro.example' },
 };
 
 function PostcardPreview({ businesses, campaign, toast }) {

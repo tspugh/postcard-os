@@ -10,5 +10,5 @@ Claude plugin for the postcard-os MCP server.
 Install for local use:
 
 ```sh
-claude plugin install /srv/ssd/Projects/postcard-os/plugin
+claude plugin install ./plugin
 ```
